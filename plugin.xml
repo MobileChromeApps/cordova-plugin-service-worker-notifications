@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+	   id="org.apache.cordova.notification"
+      version="0.0.1-dev">
+    <name>Notification</name>
+    <description>Notification Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,notification</keywords>
+
+    <dependency id="de.appplant.cordova.plugin.local-notification" url="https://github.com/katzer/cordova-plugin-local-notifications.git" />
+
+    <js-module src="www/Notification.js" name="Notification">
+	<clobbers target="Notification" />
+    </js-module>
+    <js-module src="www/Assets.js" name="Assets">
+	<clobbers target="" />
+    </js-module>
+</plugin>
