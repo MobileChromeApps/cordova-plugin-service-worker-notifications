@@ -1,6 +1,15 @@
 var exec = require('cordova/exec');
 //require('de.appplant.cordova.plugin.local-notification');
 
+var idRegistry = [];
+
+function guid() {
+  function s4() {
+	return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
 function Notification(title, options) {
     if (title === undefined) {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
@@ -24,6 +33,22 @@ function Notification(title, options) {
 	this.tag = options.tag;
 	this.icon = options.icon;
     }
+    var id = guid();
+    idRegistry.push({ id : id,
+		      notification: this
+		    });
+    console.log(id);
+    cordova.plugins.notification.local.schedule({
+	id: id,
+	title: this.title,
+	text: this.body,
+	//every: 0,
+	//at: new Date(),
+	//badge: 0,
+	//sound: this.sound,
+	data: { thing:"myData" },
+	//icon: this.icon
+    });
     return this;
 }
 
@@ -46,7 +71,15 @@ Notification.requestPermission = function() {
 };
 
 Notification.prototype.close = function() {
-
+    var _this = this;
+    idRegistry.forEach(function(reg) {
+	if (reg.notification == _this) {
+	    cordova.plugins.notification.local.cancel(reg.id, function() {
+		console.log("Closed reg");
+	    });
+	    return;
+	}
+    });
 };
 
 var ctor = function() {};
