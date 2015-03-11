@@ -17,6 +17,7 @@ function Notification(title, options) {
     this.body = "";
     this.tag = "";
     this.icon = "";
+    this.sticky = false;
     if (options === undefined) {
 
     } else {
@@ -25,6 +26,7 @@ function Notification(title, options) {
 	this.body = options.body;
 	this.tag = options.tag;
 	this.icon = options.icon;
+	this.sticky = options.sticky;
     }
     var uuid = (new Date()).getTime();
     idRegistry.push({ id : uuid,
@@ -40,7 +42,8 @@ function Notification(title, options) {
 	//badge: 0,
 	//sound: this.sound,
 	data: { thing:"myData" },
-	//icon: this.icon
+	//icon: this.icon,
+	ongoing: this.sticky
     });
     return this;
 }
@@ -56,6 +59,28 @@ var updatePermission = function() {
     });
 };
 
+var getNotificationById = function(id) {
+    var toReturn;
+    idRegistry.forEach(function(reg) {
+	if (reg.id == id) {
+	    toReturn = reg.notification;
+	    return;
+	}
+    });
+    return toReturn;
+};
+
+var getIdByNotification = function(notification) {
+    var toReturn;
+    idRegistry.forEach(function(reg) {
+	if (reg.notification == notification) {
+	    toReturn = reg.id;
+	    return;
+	}
+    });
+    return toReturn;
+};
+
 Notification.requestPermission = function() {
     cordova.plugins.notification.local.registerPermission(function(granted) {
 	console.log("permission has been granted: " + granted);
@@ -64,13 +89,8 @@ Notification.requestPermission = function() {
 };
 
 Notification.prototype.close = function() {
-    var _this = this;
-    idRegistry.forEach(function(reg) {
-	if (reg.notification == _this) {
-	    cordova.plugins.notification.local.cancel(reg.id, function() {});
-	    return;
-	}
-    });
+    var id = getIdByNotification(this);
+    cordova.plugins.notification.local.cancel(id, function() {});
 };
 
 var ctor = function() {};
@@ -85,6 +105,20 @@ catch(e)
     console.log("This browser does not support EventTarget");
 }
 
-document.addEventListener('deviceready', updatePermission);
+document.addEventListener('deviceready', function() {
+    updatePermission();
+    cordova.plugins.notification.local.on("cancel", function(registration) {
+	notification = getNotificationById(registration.id);
+	notification.onclose.call();
+    });
+    cordova.plugins.notification.local.on("click", function(registration) {
+	notification = getNotificationById(registration.id);
+	notification.onclick.call();
+    });
+    cordova.plugins.notification.local.on("trigger", function(registration) {
+	notification = getNotificationById(registration.id);
+	//notification.onshow.call();
+    });
+});
 
 module.exports = Notification;
