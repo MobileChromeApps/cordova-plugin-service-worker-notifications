@@ -3,13 +3,6 @@ var exec = require('cordova/exec');
 
 var idRegistry = [];
 
-function guid() {
-  function s4() {
-	return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-    }
-    return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-}
-
 function Notification(title, options) {
     if (title === undefined) {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
@@ -33,13 +26,13 @@ function Notification(title, options) {
 	this.tag = options.tag;
 	this.icon = options.icon;
     }
-    var id = guid();
-    idRegistry.push({ id : id,
+    var uuid = (new Date()).getTime();
+    idRegistry.push({ id : uuid,
 		      notification: this
 		    });
-    console.log(id);
+    console.log(uuid);
     cordova.plugins.notification.local.schedule({
-	id: id,
+	id: uuid,
 	title: this.title,
 	text: this.body,
 	//every: 0,
@@ -74,9 +67,7 @@ Notification.prototype.close = function() {
     var _this = this;
     idRegistry.forEach(function(reg) {
 	if (reg.notification == _this) {
-	    cordova.plugins.notification.local.cancel(reg.id, function() {
-		console.log("Closed reg");
-	    });
+	    cordova.plugins.notification.local.cancel(reg.id, function() {});
 	    return;
 	}
     });
