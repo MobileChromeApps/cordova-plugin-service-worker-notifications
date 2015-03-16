@@ -121,7 +121,7 @@ document.addEventListener('deviceready', function() {
     });
     cordova.plugins.notification.local.on("trigger", function(registration) {
 	notification = getNotificationById(registration.id);
-	//notification.onshow.call();
+	//TODO: Implement onShow
     });
 });
 
