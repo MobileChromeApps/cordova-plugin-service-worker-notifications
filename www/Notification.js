@@ -1,4 +1,8 @@
-var exec = require('cordova/exec');
+try {
+    var exec = require('cordova/exec');
+} catch (e) {
+
+}
 
 var idRegistry = [];
 
@@ -124,5 +128,13 @@ document.addEventListener('deviceready', function() {
 	//TODO: Implement onShow
     });
 });
+
+try {
+    navigator.serviceWorker.ready.then(function(swreg) {
+	exec(null, null, "Notification", "setup", []);
+    });
+} catch(e) {
+    // This is in the service worker context
+}
 
 module.exports = Notification;

@@ -15,4 +15,16 @@
     <js-module src="www/Assets.js" name="Assets">
 	<clobbers target="" />
     </js-module>
+
+    <asset src="www/Notification.js" target="sw_assets/Notification.js" />
+
+    <platform name="ios">
+	<config-file target="config.xml" parent="/*">
+	    <feature name="Notification">
+		<param name="ios-package" value="CDVNotification" />
+	    </feature>
+	</config-file>
+	<header-file src="src/ios/CDVNotification.h" />
+	<source-file src="src/ios/CDVNotification.m" />
+    </platform>
 </plugin>
