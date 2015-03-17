@@ -58,21 +58,23 @@
 
 - (void)schedule
 {
+    __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_finalizeSchedule"]= ^(JSValue *options, JSValue *callback) {
         CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
         [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:[NSArray arrayWithObjects:options.toArray[0], nil ] forKey:@"arguments"];
-        [localNotification performSelectorOnMainThread:@selector(schedule:) withObject:command waitUntilDone:NO];
+        [command setValue:options.toArray forKey:@"arguments"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(schedule:) withObject:command waitUntilDone:NO];
     };
 }
 
 - (void)update
 {
-    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"update"]= ^(JSValue *options, JSValue *callback) {
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"CDVNotification_finalizeUpdate"]= ^(JSValue *options, JSValue *callback) {
         CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
         [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:[NSArray arrayWithObjects:options.toDictionary, nil ] forKey:@"arguments"];
-        [localNotification performSelectorOnMainThread:@selector(update:) withObject:command waitUntilDone:NO];
+        [command setValue:options.toArray forKey:@"arguments"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(update:) withObject:command waitUntilDone:NO];
     };
 }
 
