@@ -19,9 +19,11 @@
 
 #import <Cordova/CDVPlugin.h>
 #import "CDVServiceWorker.h"
+#import "APPLocalNotification.h"
 
 @interface CDVNotification : CDVPlugin {}
 
 @property (nonatomic, strong) CDVServiceWorker *serviceWorker;
+@property (nonatomic, strong) APPLocalNotification *localNotification;
 
 @end

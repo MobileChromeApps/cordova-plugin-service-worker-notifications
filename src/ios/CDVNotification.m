@@ -25,20 +25,25 @@
 @implementation CDVNotification
 
 @synthesize serviceWorker;
+@synthesize localNotification;
 
 - (void) setup:(CDVInvokedUrlCommand*)command
 {
     self.serviceWorker = [(CDVViewController*)self.viewController getCommandInstance:@"ServiceWorker"];
-    APPLocalNotification *localNotifications = [[APPLocalNotification alloc] init];
-
+    self.localNotification = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
+    
     // A messy way to create a stub object for porting the existing plugin to the service worker context
-    [serviceWorker.context evaluateScript:@"var cordova = {}; cordova.plugins = {}; cordova.plugins.notification = {}; cordova.plugins.notification.local = {};"];
+    //[serviceWorker.context evaluateScript:@"var cordova = {}; cordova.plugins = {}; cordova.plugins.notification = {}; cordova.plugins.notification.local = {};"];
 
     [self hasPermission];
     [self schedule];
     [self registerPermission];
     [self cancel];
     [self on];
+    
+    //update permissions
+    NSString *toDispatch = @"function(bool) { Notification.permission = bool; }";
+    [self checkPermission:(JSValue*)toDispatch];
 
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
@@ -53,15 +58,28 @@
 
 - (void)schedule
 {
-    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"schedule"]= ^(JSValue *callback) {
+    serviceWorker.context[@"CDVNotification_finalizeSchedule"]= ^(JSValue *options, JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [command setValue:[NSArray arrayWithObjects:options.toArray[0], nil ] forKey:@"arguments"];
+        [localNotification performSelectorOnMainThread:@selector(schedule:) withObject:command waitUntilDone:NO];
+    };
+}
 
+- (void)update
+{
+    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"update"]= ^(JSValue *options, JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [command setValue:[NSArray arrayWithObjects:options.toDictionary, nil ] forKey:@"arguments"];
+        [localNotification performSelectorOnMainThread:@selector(update:) withObject:command waitUntilDone:NO];
     };
 }
 
 - (void)cancel
 {
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"cancel"]= ^(JSValue *callback) {
-
+        
     };
 }
 
