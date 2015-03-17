@@ -17,13 +17,23 @@ cordova.plugins.notification.local.schedule = function(options, callback, scope)
 
 cordova.plugins.notification.local.update = function(options, callback, scope) {
     var notifications = Array.isArray(options) ? options : [options];
-
     for (var i = 0; i < notifications.length; i++) {
 	var properties = notifications[i];
 	CDVNotification_convertProperties(properties);
     }
-
     CDVNotification_update(notifications, callback);
+};
+
+cordova.plugins.notification.local.clear = function(ids, callback, scope) {
+    ids = Array.isArray(ids) ? ids : [ids];
+    ids = CDVNotification_convertIds(ids);
+    CDVNotification_clear(ids, callback);
+};
+
+cordova.plugins.notification.local.cancel = function(ids, callback, scope) {
+    ids = Array.isArray(ids) ? ids : [ids];
+    ids = CDVNotification_convertIds(ids);
+    CDVNotification_cancel(ids, callback);
 };
 
 CDVNotification_defaults = {
@@ -113,4 +123,12 @@ CDVNotification_convertProperties = function(options) {
     }
 
     return options;
+};
+
+CDVNotification_convertIds = function(ids) {
+    var convertedIds = [];
+    for (var i = 0; i < ids.length; i++) {
+	convertedIds.push(ids[i].toString());
+    }
+    return convertedIds;
 };

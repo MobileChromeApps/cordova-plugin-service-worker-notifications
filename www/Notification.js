@@ -103,7 +103,6 @@ catch(e)
 
 Notification.prototype.close = function() {
     var id = getIdByNotification(this);
-    console.log(id);
     cordova.plugins.notification.local.cancel(id, function() {console.log("Canceled");});
 };
 

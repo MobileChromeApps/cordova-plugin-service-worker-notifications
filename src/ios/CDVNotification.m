@@ -42,6 +42,7 @@
     [self clearAll];
     [self registerPermission];
     [self cancel];
+    [self cancelAll];
     [self on];
     
     //update permissions
@@ -83,7 +84,13 @@
 
 - (void)clear
 {
-    
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"CDVNotification_clear"]= ^(JSValue *ids, JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [command setValue:ids.toArray forKey:@"arguments"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(clear:) withObject:command waitUntilDone:NO];
+    };
 }
 
 - (void)clearAll
@@ -98,8 +105,22 @@
 
 - (void)cancel
 {
-    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"cancel"]= ^(JSValue *callback) {
-        
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"CDVNotification_cancel"]= ^(JSValue *ids, JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [command setValue:ids.toArray forKey:@"arguments"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(cancel:) withObject:command waitUntilDone:NO];
+    };
+}
+
+- (void)cancelAll
+{
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"cancelAll"]= ^(JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(cancelAll:) withObject:command waitUntilDone:NO];
     };
 }
 
