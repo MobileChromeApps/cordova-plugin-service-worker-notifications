@@ -5,7 +5,6 @@ if (typeof cordova === 'undefined') {
     cordova.plugins.notification.local = {};
 }
 cordova.plugins.notification.local.schedule = function(options, callback, scope) {
-    
     var notifications = Array.isArray(options) ? options : [options];
     for (var i = 0; i < notifications.length; i++) {
 	var properties = notifications[i];

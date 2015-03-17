@@ -88,7 +88,12 @@
 
 - (void)clearAll
 {
-    
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"clearAll"]= ^(JSValue *callback) {
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
+        [command setValue:callback.toString forKey:@"callbackId"];
+        [weakSelf.localNotification performSelectorOnMainThread:@selector(clearAll:) withObject:command waitUntilDone:NO];
+    };
 }
 
 - (void)cancel
