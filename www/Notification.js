@@ -98,7 +98,7 @@ try
 }
 catch(e) 
 {
-    console.log("This browser does not support EventTarget");
+    console.log("This webview does not support EventTarget");
 }
 
 Notification.prototype.close = function() {
@@ -106,7 +106,7 @@ Notification.prototype.close = function() {
     cordova.plugins.notification.local.cancel(id, function() {console.log("Canceled");});
 };
 
-document.addEventListener('deviceready', function() {
+var CDVNotification_setupListeners = function () {
     updatePermission();
     cordova.plugins.notification.local.on("cancel", function(registration) {
 	notification = getNotificationById(registration.id);
@@ -126,7 +126,9 @@ document.addEventListener('deviceready', function() {
 	notification = getNotificationById(registration.id);
 	//TODO: Implement onShow
     });
-});
+};
+
+document.addEventListener('deviceready', CDVNotification_setupListeners);
 
 try {
     navigator.serviceWorker.ready.then(function(swreg) {
