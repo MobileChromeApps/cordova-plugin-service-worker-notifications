@@ -13,7 +13,18 @@ cordova.plugins.notification.local.schedule = function(options, callback, scope)
 	CDVNotification_mergeWithDefaults(properties);
 	CDVNotification_convertProperties(properties);
     }
-    CDVNotification_finalizeSchedule(notifications, callback);
+    CDVNotification_schedule(notifications, callback);
+};
+
+cordova.plugins.notification.local.update = function(options, callback, scope) {
+    var notifications = Array.isArray(options) ? options : [options];
+
+    for (var i = 0; i < notifications.length; i++) {
+	var properties = notifications[i];
+	CDVNotification_convertProperties(properties);
+    }
+
+    CDVNotification_update(notifications, callback);
 };
 
 CDVNotification_defaults = {

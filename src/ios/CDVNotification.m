@@ -37,6 +37,9 @@
 
     [self hasPermission];
     [self schedule];
+    [self update];
+    [self clear];
+    [self clearAll];
     [self registerPermission];
     [self cancel];
     [self on];
@@ -59,7 +62,7 @@
 - (void)schedule
 {
     __weak CDVNotification *weakSelf = self;
-    serviceWorker.context[@"CDVNotification_finalizeSchedule"]= ^(JSValue *options, JSValue *callback) {
+    serviceWorker.context[@"CDVNotification_schedule"]= ^(JSValue *options, JSValue *callback) {
         CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
         [command setValue:callback.toString forKey:@"callbackId"];
         [command setValue:options.toArray forKey:@"arguments"];
@@ -70,12 +73,22 @@
 - (void)update
 {
     __weak CDVNotification *weakSelf = self;
-    serviceWorker.context[@"CDVNotification_finalizeUpdate"]= ^(JSValue *options, JSValue *callback) {
+    serviceWorker.context[@"CDVNotification_update"]= ^(JSValue *options, JSValue *callback) {
         CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
         [command setValue:callback.toString forKey:@"callbackId"];
         [command setValue:options.toArray forKey:@"arguments"];
         [weakSelf.localNotification performSelectorOnMainThread:@selector(update:) withObject:command waitUntilDone:NO];
     };
+}
+
+- (void)clear
+{
+    
+}
+
+- (void)clearAll
+{
+    
 }
 
 - (void)cancel
