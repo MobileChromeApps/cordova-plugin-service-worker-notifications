@@ -24,6 +24,5 @@
 @interface CDVNotification : CDVPlugin {}
 
 @property (nonatomic, strong) CDVServiceWorker *serviceWorker;
-@property (nonatomic, strong) APPLocalNotification *localNotification;
 
 @end

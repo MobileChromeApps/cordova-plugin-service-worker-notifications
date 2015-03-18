@@ -27,12 +27,10 @@
 @implementation CDVNotification
 
 @synthesize serviceWorker;
-@synthesize localNotification;
 
 - (void) setup:(CDVInvokedUrlCommand*)command
 {
     self.serviceWorker = [(CDVViewController*)self.viewController getCommandInstance:@"ServiceWorker"];
-    self.localNotification = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
 
     [self hasPermission];
     [self schedule];
@@ -43,6 +41,8 @@
     [self cancel];
     [self cancelAll];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:) name:UIApplicationDidFinishLaunchingNotification object:nil];
     [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
 
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -71,7 +71,7 @@
                 
                 [weakSelf cancelForerunnerLocalNotification:notification];
                 [[UIApplication sharedApplication] scheduleLocalNotification:notification];
-                //[weakSelf fireEvent:@"schedule" notification:notification];
+                [weakSelf fireEvent:@"schedule" notification:notification];
                 
                 if (notifications.count > 1) {
                     [NSThread sleepForTimeInterval:0.01];
@@ -199,13 +199,28 @@
     };
 }
 
-- (void)application:(UIApplication*)application didReceiveLocalNotification:(UILocalNotification *)notification {
- /*   if ([notification wasUpdated])
+
+- (void)didFinishLaunchingWithOptions:(NSNotification*)notification {
+    NSDictionary* launchOptions = [notification userInfo];
+    UILocalNotification* localNotification;
+    localNotification = [launchOptions objectForKey:
+                         UIApplicationLaunchOptionsLocalNotificationKey];
+    if (localNotification) {
+        [self didReceiveLocalNotification:
+         [NSNotification notificationWithName:CDVLocalNotification
+                                       object:localNotification]];
+    }
+}
+
+- (void) didReceiveLocalNotification:(NSNotification*)localNotification
+{
+    UILocalNotification *notification = [localNotification object];
+    if ([notification wasUpdated])
         return;
     
     NSTimeInterval timeInterval = [notification timeIntervalSinceLastTrigger];
     
-    NSString* event = (timeInterval <= 1 && deviceready) ? @"trigger" : @"click";
+    NSString* event = (timeInterval <= 1) ? @"trigger" : @"click";
     
     [self fireEvent:event notification:notification];
     
@@ -215,15 +230,8 @@
     if ([notification isRepeating]) {
         [self fireEvent:@"clear" notification:notification];
     } else {
-        [self.app cancelLocalNotification:notification];
+        [[UIApplication sharedApplication] cancelLocalNotification:notification];
         [self fireEvent:@"cancel" notification:notification];
-    }*/
-}
-
-- (void)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    UILocalNotification *notification = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
-    if (notification) {
-        //TODO: launching from click
     }
 }
 
