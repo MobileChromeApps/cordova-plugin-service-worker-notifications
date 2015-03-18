@@ -68,6 +68,12 @@ function Notification(title, options) {
 	this.data = options.data || this.data;
     }
     var id = this.tag || Date.now();
+    if (id === this.tag) {
+	id = "";
+	for (var i = 0; i < this.tag.length; i++) {
+	    id = id + this.tag.charCodeAt(i);
+	}
+    }
     idRegistry.push({ id : id,
 		      notification: this
 		    });
