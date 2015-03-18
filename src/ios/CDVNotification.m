@@ -33,9 +33,6 @@
 {
     self.serviceWorker = [(CDVViewController*)self.viewController getCommandInstance:@"ServiceWorker"];
     self.localNotification = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
-    
-    // A messy way to create a stub object for porting the existing plugin to the service worker context
-    //[serviceWorker.context evaluateScript:@"var cordova = {}; cordova.plugins = {}; cordova.plugins.notification = {}; cordova.plugins.notification.local = {};"];
 
     [self hasPermission];
     [self schedule];
@@ -63,10 +60,6 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_schedule"]= ^(JSValue *options, JSValue *callback) {
-        /*CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:options.toArray forKey:@"arguments"];
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(schedule:) withObject:command waitUntilDone:NO];*/
         NSArray* notifications = options.toArray;
         
         [weakSelf.commandDelegate runInBackground:^{
@@ -84,6 +77,7 @@
                     [NSThread sleepForTimeInterval:0.01];
                 }
             }
+            [weakSelf executeCallback:callback];
         }];
     };
 }
@@ -92,10 +86,6 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_update"]= ^(JSValue *options, JSValue *callback) {
-        /*CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:options.toArray forKey:@"arguments"];
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(update:) withObject:command waitUntilDone:NO];*/
         NSArray* notifications = options.toArray;
         
         [weakSelf.commandDelegate runInBackground:^{
@@ -116,6 +106,7 @@
                     [NSThread sleepForTimeInterval:0.01];
                 }
             }
+            [weakSelf executeCallback:callback];
         }];
     };
 }
@@ -124,10 +115,6 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_clear"]= ^(JSValue *ids, JSValue *callback) {
-        /*CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:ids.toArray forKey:@"arguments"];
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(clear:) withObject:command waitUntilDone:NO];*/
         [weakSelf.commandDelegate runInBackground:^{
             for (NSString* id in ids.toArray) {
                 UILocalNotification* notification;
@@ -140,6 +127,7 @@
                 [[UIApplication sharedApplication] clearLocalNotification:notification];
                 [weakSelf fireEvent:@"clear" notification:notification];
             }
+            [weakSelf executeCallback:callback];
         }];
     };
 }
@@ -148,11 +136,12 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"clearAll"]= ^(JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        NSString *toCall = [NSString stringWithFormat:@"(%@)", callback.toString];
-        [command setValue:toCall forKey:@"callbackId"];
-        NSLog(@"Callback: %@", [command callbackId]);
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(clearAll:) withObject:command waitUntilDone:NO];
+        [self.commandDelegate runInBackground:^{
+            [[UIApplication sharedApplication] clearAllLocalNotifications];
+            [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+            [weakSelf fireEvent:@"clearall" notification:NULL];
+            [weakSelf executeCallback:callback];
+        }];
     };
 }
 
@@ -160,22 +149,17 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_cancel"]= ^(JSValue *ids, JSValue *callback) {
-        /*CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:callback.toString forKey:@"callbackId"];
-        [command setValue:ids.toArray forKey:@"arguments"];
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(cancel:) withObject:command waitUntilDone:NO];*/
         [weakSelf.commandDelegate runInBackground:^{
             for (NSString* id in ids.toArray) {
                 UILocalNotification* notification;
-                
                 notification = [[UIApplication sharedApplication] localNotificationWithId:id];
-                
-                if (!notification)
+                if (!notification) {
                     continue;
-                
+                }
                 [[UIApplication sharedApplication] cancelLocalNotification:notification];
                 [weakSelf fireEvent:@"cancel" notification:notification];
             }
+            [weakSelf executeCallback:callback];
         }];
     };
 }
@@ -184,9 +168,12 @@
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"cancelAll"]= ^(JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:callback.toString forKey:@"callbackId"];
-        [weakSelf.localNotification performSelectorOnMainThread:@selector(cancelAll:) withObject:command waitUntilDone:NO];
+        [self.commandDelegate runInBackground:^{
+            [[UIApplication sharedApplication] cancelAllLocalNotifications];
+            [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+            [weakSelf fireEvent:@"cancelall" notification:NULL];
+            [weakSelf executeCallback:callback];
+        }];
     };
 }
 
@@ -236,7 +223,7 @@
 - (void)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     UILocalNotification *notification = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
     if (notification) {
-        //DO think on launching from click
+        //TODO: launching from click
     }
 }
 
@@ -287,6 +274,11 @@
     
     [self cancelForerunnerLocalNotification:notification];
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
+}
+
+- (void) executeCallback:(JSValue *)callback
+{
+    [self.serviceWorker performSelectorOnMainThread:@selector(evaluateScript:) withObject:[NSString stringWithFormat:@"(%@)();", callback] waitUntilDone:NO];
 }
 
 - (void) fireEvent:(NSString*)event notification:(UILocalNotification*)notification
