@@ -44,7 +44,6 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:) name:UIApplicationDidFinishLaunchingNotification object:nil];
     [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
-
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
@@ -61,14 +60,11 @@
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_schedule"]= ^(JSValue *options, JSValue *callback) {
         NSArray* notifications = options.toArray;
-        
         [weakSelf.commandDelegate runInBackground:^{
             for (NSDictionary* options in notifications) {
                 UILocalNotification* notification;
-                
                 notification = [[UILocalNotification alloc]
                                 initWithOptions:options];
-                
                 [weakSelf cancelForerunnerLocalNotification:notification];
                 [[UIApplication sharedApplication] scheduleLocalNotification:notification];
                 [weakSelf fireEvent:@"schedule" notification:notification];
@@ -87,21 +83,17 @@
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_update"]= ^(JSValue *options, JSValue *callback) {
         NSArray* notifications = options.toArray;
-        
         [weakSelf.commandDelegate runInBackground:^{
             for (NSDictionary* options in notifications) {
                 NSString* id = [options objectForKey:@"id"];
                 UILocalNotification* notification;
-                
                 notification = [[UIApplication sharedApplication] localNotificationWithId:id];
-                
-                if (!notification)
+                if (!notification) {
                     continue;
-                
+                }
                 [weakSelf updateLocalNotification:[notification copy]
                                   withOptions:options];
                 [weakSelf fireEvent:@"update" notification:notification];
-                
                 if (notifications.count > 1) {
                     [NSThread sleepForTimeInterval:0.01];
                 }
@@ -118,12 +110,10 @@
         [weakSelf.commandDelegate runInBackground:^{
             for (NSString* id in ids.toArray) {
                 UILocalNotification* notification;
-                
                 notification = [[UIApplication sharedApplication] localNotificationWithId:id];
-                
-                if (!notification)
+                if (!notification) {
                     continue;
-                
+                }
                 [[UIApplication sharedApplication] clearLocalNotification:notification];
                 [weakSelf fireEvent:@"clear" notification:notification];
             }
@@ -217,16 +207,12 @@
     UILocalNotification *notification = [localNotification object];
     if ([notification wasUpdated])
         return;
-    
     NSTimeInterval timeInterval = [notification timeIntervalSinceLastTrigger];
-    
     NSString* event = (timeInterval <= 1) ? @"trigger" : @"click";
-    
     [self fireEvent:event notification:notification];
-    
-    if (![event isEqualToString:@"click"])
+    if (![event isEqualToString:@"click"]) {
         return;
-    
+    }
     if ([notification isRepeating]) {
         [self fireEvent:@"clear" notification:notification];
     } else {
@@ -260,12 +246,10 @@
 {
     NSString* id = notification.options.id;
     UILocalNotification* forerunner;
-    
     forerunner = [[UIApplication sharedApplication] localNotificationWithId:id];
-    
-    if (!forerunner)
+    if (!forerunner) {
         return;
-    
+    }
     [[UIApplication sharedApplication] cancelLocalNotification:forerunner];
 }
 
@@ -273,19 +257,19 @@
                      withOptions:(NSDictionary*)newOptions
 {
     NSMutableDictionary* options = [notification.userInfo mutableCopy];
-    
     [options addEntriesFromDictionary:newOptions];
     [options setObject:[NSDate date] forKey:@"updatedAt"];
-    
     notification = [[UILocalNotification alloc]
                     initWithOptions:options];
-    
     [self cancelForerunnerLocalNotification:notification];
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
 }
 
 - (void) executeCallback:(JSValue *)callback
 {
+    if ([callback.toString isEqualToString:@"undefined"]) {
+        return;
+    }
     [self.serviceWorker performSelectorOnMainThread:@selector(evaluateScript:) withObject:[NSString stringWithFormat:@"(%@)();", callback] waitUntilDone:NO];
 }
 
@@ -293,15 +277,12 @@
 {
     NSString* params = [NSString stringWithFormat:
                         @"\"%@\"", [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive ? @"foreground" : @"background"];
-    
     if (notification) {
         NSString* args = [notification encodeToJSON];
-        
         params = [NSString stringWithFormat:
                   @"%@,'%@'",
                   args, [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive ? @"foreground" : @"background"];
     }
-    
     NSString *toDispatch = [NSString stringWithFormat:@"CDVNotification_fireEvent('%@',%@);", event, params];
     [serviceWorker.context evaluateScript:toDispatch];
 }
