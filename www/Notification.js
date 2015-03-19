@@ -65,8 +65,7 @@ function Notification(title, options) {
     if (this.id === this.tag) {
 	this.id = CDVNotification_encodeTag(this.tag);
     }
-    var toRegister = { 
-	data: {
+    this.regData = {
 	    id: this.id,
 	    title: this.title,
 	    text: this.body,
@@ -77,9 +76,6 @@ function Notification(title, options) {
 	    data: this.data,
 	    icon: (this.addEventListener !== undefined ? this.icon : ""),
 	    ongoing: this.sticky
-	},
-	tag: this.tag,
-	dir: this.dir
     };
     var that = this;
     var eventCallback = function(eventType) {
@@ -105,10 +101,10 @@ function Notification(title, options) {
 	}
     };
     var schedule = function() {
-	cordova.plugins.notification.local.schedule(toRegister.data);
+	cordova.plugins.notification.local.schedule(that.regData);
     };
     var update = function() {
-	cordova.plugins.notification.local.update(toRegister.data);
+	cordova.plugins.notification.local.update(that.regData);
     };
     var success = function(option) {
 	if(option) {
@@ -118,9 +114,9 @@ function Notification(title, options) {
 	}
     };
     try {
-	exec(success, eventCallback, "Notification", "cordovaRegisterNotificationTag", [toRegister]);
+	exec(success, eventCallback, "Notification", "cordovaRegisterNotificationTag", [that]);
     } catch(e) {
-	CDVNotification_registerTag(toRegister, schedule, update, eventCallback);
+	CDVNotification_registerTag(that, schedule, update, eventCallback);
     }
     CDVNotification_updatePermission();
 }

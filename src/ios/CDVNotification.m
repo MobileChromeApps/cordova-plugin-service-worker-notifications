@@ -193,8 +193,8 @@
 
 - (void)cordovaRegisterNotificationTag:(CDVInvokedUrlCommand*)command
 {
-    NSDictionary *tag = [command argumentAtIndex:0];
-    BOOL sOrU = [self registerNotification:tag withEventCallback:command.callbackId];
+    NSDictionary *notification = [command argumentAtIndex:0];
+    BOOL sOrU = [self registerNotification:notification withEventCallback:command.callbackId];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:sOrU];
     [result setKeepCallback:[NSNumber numberWithBool:YES]];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
@@ -211,8 +211,8 @@
 - (void)serviceWorkerRegisterTag
 {
     __weak CDVNotification* weakSelf = self;
-    serviceWorker.context[@"CDVNotification_registerTag"]= ^(JSValue *toRegister, JSValue *scheduleCallback, JSValue *updateCallback, JSValue *eventCallback) {
-        BOOL success = [weakSelf registerNotification:[toRegister toDictionary] withEventCallback:eventCallback];
+    serviceWorker.context[@"CDVNotification_registerTag"]= ^(JSValue *notification, JSValue *scheduleCallback, JSValue *updateCallback, JSValue *eventCallback) {
+        BOOL success = [weakSelf registerNotification:[notification toDictionary] withEventCallback:eventCallback];
         if (success) {
             [scheduleCallback callWithArguments:nil];
         } else {
@@ -231,7 +231,7 @@
 
 - (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(NSObject*)eventCallback
 {
-    NSString *tag = [NSString stringWithFormat:@"%@", [[notification objectForKey:@"data"] objectForKey:@"id"]];
+    NSString *tag = [NSString stringWithFormat:@"%@", [notification objectForKey:@"id"]];
     NSMutableDictionary *mNotification = [NSMutableDictionary dictionaryWithDictionary:notification];
     [mNotification setObject:eventCallback forKey:@"eventCallback"];
     if (self.notificationList == nil) {
