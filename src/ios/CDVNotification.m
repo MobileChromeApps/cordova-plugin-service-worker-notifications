@@ -44,8 +44,6 @@
     [self cancel];
     [self cancelAll];
     [self serviceWorkerRegisterTag];
-    [self serviceWorkerUnregisterTag];
-    [self serviceWorkerCallEventHandler];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:) name:UIApplicationDidFinishLaunchingNotification object:nil];
@@ -197,7 +195,7 @@
 
 
 - (void)didFinishLaunchingWithOptions:(NSNotification*)notification {
-    NSDictionary* launchOptions = [notification userInfo];
+  /*  NSDictionary* launchOptions = [notification userInfo];
     UILocalNotification* localNotification;
     localNotification = [launchOptions objectForKey:
                          UIApplicationLaunchOptionsLocalNotificationKey];
@@ -205,12 +203,12 @@
         [self didReceiveLocalNotification:
          [NSNotification notificationWithName:CDVLocalNotification
                                        object:localNotification]];
-    }
+    }*/
 }
 
 - (void) didReceiveLocalNotification:(NSNotification*)localNotification
 {
-    UILocalNotification *notification = [localNotification object];
+   /* UILocalNotification *notification = [localNotification object];
     if ([notification wasUpdated])
         return;
     NSTimeInterval timeInterval = [notification timeIntervalSinceLastTrigger];
@@ -227,7 +225,7 @@
     } else {
         [[UIApplication sharedApplication] cancelLocalNotification:notification];
         [self fireEvent:@"cancel" notification:notification];
-    }
+    }*/
 }
 
 - (void)checkPermission:(JSValue*)callback
@@ -284,7 +282,7 @@
 
 - (void)fireEvent:(NSString*)event notification:(UILocalNotification*)notification
 {
-    NSString* params = [NSString stringWithFormat:
+   /* NSString* params = [NSString stringWithFormat:
                         @"\"%@\"", [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive ? @"foreground" : @"background"];
     if (notification) {
         NSString* args = [notification encodeToJSON];
@@ -293,20 +291,16 @@
                   args, [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive ? @"foreground" : @"background"];
     }
     NSString *toDispatch = [NSString stringWithFormat:@"CDVNotification_fireEvent('%@',%@);", event, params];
-    [serviceWorker.context evaluateScript:toDispatch];
+    [serviceWorker.context evaluateScript:toDispatch];*/
 }
 
 - (void)cordovaRegisterNotificationTag:(CDVInvokedUrlCommand*)command
 {
     NSDictionary *tag = [command argumentAtIndex:0];
-    JSValue *eventCallback = [command argumentAtIndex:1];
-    if ([self registerNotification:tag withEventCallback:eventCallback]) {
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    } else {
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    }
+    BOOL sOrU = [self registerNotification:tag withEventCallback:command.callbackId];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:sOrU];
+    [result setKeepCallback:[NSNumber numberWithBool:YES]];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)cordovaUnregisterNotificationTag:(CDVInvokedUrlCommand*)command
@@ -327,14 +321,6 @@
         } else {
             [updateCallback callWithArguments:nil];
         }
-    };
-}
-
-- (void)serviceWorkerUnregisterTag
-{
-    __weak CDVNotification* weakSelf = self;
-    serviceWorker.context[@"CDVNotification_unregisterTag"]= ^(JSValue *tag) {
-        [weakSelf unregisterNotification:[tag toString]];
     };
 }
 
@@ -362,7 +348,7 @@
     }
 }
 
-- (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(JSValue*)eventCallback
+- (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(NSObject*)eventCallback
 {
     NSString *tag = [NSString stringWithFormat:@"%@", [[notification objectForKey:@"data"] objectForKey:@"id"]];
     NSMutableDictionary *mNotification = [NSMutableDictionary dictionaryWithDictionary:notification];
@@ -384,21 +370,21 @@
 
 - (void)cordovaCallEventHandler:(CDVInvokedUrlCommand*)command
 {
-    NSString *eventType = [command argumentAtIndex:0];
-
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    NSString *tag = [command argumentAtIndex:0];
+    NSString *eventType = [command argumentAtIndex:1];
+    NSDictionary *notification = [self.notificationList objectForKey:tag];
+    NSArray *arguments = [NSArray arrayWithObject:eventType];
+    NSObject *eventCallback = [notification objectForKey:@"eventCallback"];
+    if ([eventCallback isKindOfClass:[JSValue class]]) {
+        [(JSValue*)eventCallback callWithArguments:arguments];
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    } else {
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:eventType];
+        [self.commandDelegate sendPluginResult:result callbackId:(NSString*)eventCallback];
+    }
+    
   
-}
-
-- (void)serviceWorkerCallEventHandler
-{
-    __weak CDVNotification* weakSelf = self;
-    serviceWorker.context[@"CDVNotification_callEventHandler"]= ^(JSValue *tag, JSValue *eventType) {
-        NSDictionary *notification = [weakSelf.notificationList objectForKey:tag.toString];
-        NSArray *arguments = [NSArray arrayWithObject:eventType.toString];
-        [[notification objectForKey:@"eventCallback"] callWithArguments:arguments];
-    };
 }
 
 @end
