@@ -10,6 +10,24 @@ showNotification = function(title, options) {
     });
 };
 
+getNotifications = function(filter) {
+    return new Promise(function(resolve, reject) {
+	tag = "";
+	if (typeof filter !== 'undefined') {
+	    tag = filter.tag || tag;
+	    console.log("Tag: " + tag);
+	}
+	var callback = function(notifications) {
+	    if (notifications === "NotFoundError") {
+		reject();
+	    } else {
+		resolve(notifications);
+	    }
+	};
+	CDVNotification_getNotifications(tag, callback);
+    });
+};
+
 if (typeof cordova === 'undefined') {
     cordova = {};
     cordova.plugins = {};

@@ -4,19 +4,6 @@ try {
 
 }
 
-var idRegistry = [];
-
-var getNotificationById = function(id) {
-    var toReturn;
-    idRegistry.forEach(function(reg) {
-	if (reg.id == id) {
-	    toReturn = reg.notification;
-	    return;
-	}
-    });
-    return toReturn;
-};
-
 var CDVNotification_updatePermission = function() {
     cordova.plugins.notification.local.hasPermission(function (granted) {
 	Notification.permission = granted;
@@ -78,9 +65,6 @@ function Notification(title, options) {
     if (this.id === this.tag) {
 	this.id = CDVNotification_encodeTag(this.tag);
     }
-    idRegistry.push({ id : this.id,
-		      notification: this
-		    });
     var toRegister = { 
 	data: {
 	    id: this.id,

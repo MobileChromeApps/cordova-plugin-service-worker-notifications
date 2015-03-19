@@ -36,6 +36,7 @@
     self.localNotificationManager = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
 
     // Prepare service worker context functions
+    [self getNotifications];
     [self hasPermission];
     [self schedule];
     [self update];
@@ -51,10 +52,30 @@
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
+- (void)getNotifications
+{
+    __weak CDVNotification *weakSelf = self;
+    serviceWorker.context[@"CDVNotification_getNotifications"]= ^(JSValue* tag, JSValue *callback) {
+        if ([tag.toString isEqualToString:@""]) {
+            [callback callWithArguments:[NSArray arrayWithObject:[weakSelf.notificationList allValues]]];
+        } else {
+            NSDictionary *dict;
+            for (dict in [weakSelf.notificationList allValues]) {
+                if ([[dict objectForKey:@"tag"] isEqualToString:tag.toString]) {
+                    [callback callWithArguments:[NSArray arrayWithObject:[NSArray arrayWithObject:dict]]];
+                    return;
+                }
+            }
+            [callback callWithArguments:[NSArray arrayWithObject:@"NotFoundError"]];
+        }
+    };
+}
+
 - (void)hasPermission
 {
+    __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"hasPermission"]= ^(JSValue *callback) {
-        [self checkPermission:callback];
+        [weakSelf checkPermission:callback];
     };
 }
 
