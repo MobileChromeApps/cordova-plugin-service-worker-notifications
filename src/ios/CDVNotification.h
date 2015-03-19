@@ -24,8 +24,7 @@
 @interface CDVNotification : CDVPlugin {}
 
 @property (nonatomic, strong) CDVServiceWorker *serviceWorker;
-@property (nonatomic, strong) NSMutableArray *notificationTagList;
 @property (nonatomic, strong) NSMutableDictionary *notificationList;
-
+@property (nonatomic, strong) APPLocalNotification *localNotificationManager;
 
 @end

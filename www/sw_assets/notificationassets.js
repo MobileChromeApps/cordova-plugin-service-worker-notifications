@@ -48,14 +48,6 @@ cordova.plugins.notification.local.cancel = function(ids, callback, scope) {
     CDVNotification_cancel(ids, callback);
 };
 
-cordova.plugins.notification.local.on = function(event, callback, scope) {
-    if (!CDVNotification_listener[event]) {
-	CDVNotification_listener[event] = [];
-    }
-    var item = [callback, scope || window];
-    CDVNotification_listener[event].push(item);
-};
-
 CDVNotification_defaults = {
     text:  '',
     title: '',
@@ -152,19 +144,3 @@ CDVNotification_convertIds = function(ids) {
     }
     return convertedIds;
 };
-
-CDVNotification_fireEvent = function(event) {
-    var args = Array.apply(null, arguments).splice(1),
-	listener = CDVNotification_listener[event];
-    if (!listener) {
-	return;
-    }
-
-    for (var i = 0; i < listener.length; i++) {
-	var fn = listener[i][0],
-	    scope = listener[i][1];
-	fn.apply(scope, args);
-    }
-};
-
-CDVNotification_listener = {};
