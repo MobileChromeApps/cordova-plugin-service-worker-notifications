@@ -45,9 +45,9 @@
     [self cancel];
     [self cancelAll];
     [self serviceWorkerRegisterTag];
-    
+
     [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
@@ -131,44 +131,35 @@
 - (void)registerPermission
 {
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"registerPermission"]= ^(JSValue *callback) {
-        if([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)])
+        if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)])
         {
-            if ([[UIApplication sharedApplication]
-                 respondsToSelector:@selector(registerUserNotificationSettings:)])
-            {
-                UIUserNotificationType types;
-                UIUserNotificationSettings *settings;
-                types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
-                settings = [UIUserNotificationSettings settingsForTypes:types
-                                                             categories:nil];
-                [[UIApplication sharedApplication]
-                 registerUserNotificationSettings:settings];
-            }
-        } else {
-            [self checkPermission:callback];
+            UIUserNotificationType types;
+            UIUserNotificationSettings *settings;
+            types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
+            settings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
+            [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
         }
+        [self checkPermission:callback];
+
     };
 }
 
 - (void)checkPermission:(JSValue*)callback
 {
-        NSString *hasPermission = @"false";
-        if ([[UIApplication sharedApplication]
-             respondsToSelector:@selector(registerUserNotificationSettings:)])
-        {
-            UIUserNotificationType types;
-            UIUserNotificationSettings *settings;
-            settings = [[UIApplication sharedApplication]
-                        currentUserNotificationSettings];
-            types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
-            if (settings.types & types) {
-                hasPermission = @"true";
-            }
-        } else {
-            hasPermission = @"true";
+    BOOL hathPermission = NO;
+    if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)])
+    {
+        UIUserNotificationType types;
+        UIUserNotificationSettings *settings;
+        settings = [[UIApplication sharedApplication] currentUserNotificationSettings];
+        types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
+        if (settings.types & types) {
+            hathPermission = YES;
         }
-        NSString *toDispatch = [NSString stringWithFormat:@"(%@)(%@);", callback, hasPermission];
-        [serviceWorker.context evaluateScript:toDispatch];
+    } else {
+        hathPermission = YES;
+    }
+    [callback callWithArguments:[NSArray arrayWithObject:[NSNumber numberWithBool:hathPermission]]];
 }
 
 - (void)executeCallback:(JSValue *)callback
