@@ -45,8 +45,6 @@
     [self cancelAll];
     [self serviceWorkerRegisterTag];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:) name:UIApplicationDidFinishLaunchingNotification object:nil];
     [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
@@ -193,41 +191,6 @@
     };
 }
 
-
-- (void)didFinishLaunchingWithOptions:(NSNotification*)notification {
-  /*  NSDictionary* launchOptions = [notification userInfo];
-    UILocalNotification* localNotification;
-    localNotification = [launchOptions objectForKey:
-                         UIApplicationLaunchOptionsLocalNotificationKey];
-    if (localNotification) {
-        [self didReceiveLocalNotification:
-         [NSNotification notificationWithName:CDVLocalNotification
-                                       object:localNotification]];
-    }*/
-}
-
-- (void) didReceiveLocalNotification:(NSNotification*)localNotification
-{
-   /* UILocalNotification *notification = [localNotification object];
-    if ([notification wasUpdated])
-        return;
-    NSTimeInterval timeInterval = [notification timeIntervalSinceLastTrigger];
-    NSString* event = (timeInterval <= 1) ? @"trigger" : @"click";
-    [self fireEvent:event notification:notification];
-    if (![event isEqualToString:@"click"]) {
-        return;
-    }
-    // Fire a notificationclick event into the service worker context
-    [self.serviceWorker.context evaluateScript:@"FireNotificationClickEvent();"];
-    
-    if ([notification isRepeating]) {
-        [self fireEvent:@"clear" notification:notification];
-    } else {
-        [[UIApplication sharedApplication] cancelLocalNotification:notification];
-        [self fireEvent:@"cancel" notification:notification];
-    }*/
-}
-
 - (void)checkPermission:(JSValue*)callback
 {
         NSString *hasPermission = @"false";
@@ -372,7 +335,7 @@
 {
     NSString *tag = [command argumentAtIndex:0];
     NSString *eventType = [command argumentAtIndex:1];
-    NSDictionary *notification = [self.notificationList objectForKey:tag];
+    NSMutableDictionary *notification = [NSMutableDictionary dictionaryWithDictionary:[self.notificationList objectForKey:tag]];
     NSArray *arguments = [NSArray arrayWithObject:eventType];
     NSObject *eventCallback = [notification objectForKey:@"eventCallback"];
     if ([eventCallback isKindOfClass:[JSValue class]]) {
@@ -383,7 +346,13 @@
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:eventType];
         [self.commandDelegate sendPluginResult:result callbackId:(NSString*)eventCallback];
     }
-    
+    if ([eventType isEqualToString:@"click"]) {
+        [notification removeObjectForKey:@"eventCallback"];
+        NSError *error;
+        NSData *json = [NSJSONSerialization dataWithJSONObject:notification options:0 error:&error];
+        NSString *dispatchCode = [NSString stringWithFormat:@"FireNotificationClickEvent(JSON.parse('%@'));", [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding]];
+        [serviceWorker.context performSelectorOnMainThread:@selector(evaluateScript:) withObject:dispatchCode waitUntilDone:NO];
+    }
   
 }
 

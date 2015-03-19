@@ -11,7 +11,7 @@ NotificationClickEvent.prototype = new ExtendableEvent('notificationclick');
 
 FireNotificationClickEvent = function(data) {
     var ev = new NotificationClickEvent();
-    
+    ev.notification = data;
     dispatchEvent(ev);
     if (ev.promises instanceof Array) {
 

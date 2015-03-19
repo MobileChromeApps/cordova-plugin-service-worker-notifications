@@ -46,7 +46,7 @@ function Notification(title, options) {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
     }
     this.title = title;
-    this.onclick = function(){console.log("default function");};
+    this.onclick = null;
     this.onshow = null;
     this.onerror = null;
     this.onclose = null;
@@ -100,16 +100,24 @@ function Notification(title, options) {
     var that = this;
     var eventCallback = function(eventType) {
 	if (eventType === "click") {
-	    that.onclick.call();
+	    try {
+		that.onclick.call();
+	    } catch (e) {}
 	}
 	if (eventType === "close") {
-	    that.onclose.call();
+	    try {
+		that.onclose.call();
+	    } catch (e) {}
 	}
 	if (eventType === "show") {
-	    that.onshow.call();
+	    try {
+		that.onshow.call();
+	    } catch (e) {}
 	}
 	if (eventType === "error") {
-	    that.onerror.call();
+	    try {
+		that.onerror.call();
+	    } catch (e) {}
 	}
     };
     var schedule = function() {
