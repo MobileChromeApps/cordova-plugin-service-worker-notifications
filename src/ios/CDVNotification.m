@@ -27,11 +27,13 @@
 @implementation CDVNotification
 
 @synthesize serviceWorker;
+@synthesize notificationList;
 
-- (void) setup:(CDVInvokedUrlCommand*)command
+- (void)setup:(CDVInvokedUrlCommand*)command
 {
     self.serviceWorker = [(CDVViewController*)self.viewController getCommandInstance:@"ServiceWorker"];
 
+    // Prepare service worker context functions
     [self hasPermission];
     [self schedule];
     [self update];
@@ -40,6 +42,8 @@
     [self registerPermission];
     [self cancel];
     [self cancelAll];
+    [self serviceWorkerRegisterTag];
+    [self serviceWorkerUnregisterTag];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLocalNotification:) name:CDVLocalNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didFinishLaunchingWithOptions:) name:UIApplicationDidFinishLaunchingNotification object:nil];
@@ -265,7 +269,7 @@
     [[UIApplication sharedApplication] scheduleLocalNotification:notification];
 }
 
-- (void) executeCallback:(JSValue *)callback
+- (void)executeCallback:(JSValue *)callback
 {
     if ([callback.toString isEqualToString:@"undefined"]) {
         return;
@@ -273,7 +277,7 @@
     [self.serviceWorker performSelectorOnMainThread:@selector(evaluateScript:) withObject:[NSString stringWithFormat:@"(%@)();", callback] waitUntilDone:NO];
 }
 
-- (void) fireEvent:(NSString*)event notification:(UILocalNotification*)notification
+- (void)fireEvent:(NSString*)event notification:(UILocalNotification*)notification
 {
     NSString* params = [NSString stringWithFormat:
                         @"\"%@\"", [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive ? @"foreground" : @"background"];
@@ -286,4 +290,67 @@
     NSString *toDispatch = [NSString stringWithFormat:@"CDVNotification_fireEvent('%@',%@);", event, params];
     [serviceWorker.context evaluateScript:toDispatch];
 }
+
+- (void)cordovaRegisterNotificationTag:(CDVInvokedUrlCommand*)command
+{
+    NSString *tag = [command argumentAtIndex:0];
+    if ([self registerNotificationTag:tag]) {
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    } else {
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
+}
+
+- (void)cordovaUnregisterNotificationTag:(CDVInvokedUrlCommand*)command
+{
+    NSString *tag = [command argumentAtIndex:0];
+    [self unregisterNotificationTag:tag];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)serviceWorkerRegisterTag
+{
+    __weak CDVNotification* weakSelf = self;
+    serviceWorker.context[@"CDVNotification_registerTag"]= ^(JSValue *tag, JSValue *scheduleCallback, JSValue *updateCallback, JSValue *toRegister) {
+      //  JSContext *context = [JSContext contextWithJSGlobalContextRef:JSConte]
+        BOOL success = [weakSelf registerNotificationTag:[tag toString]] ? @"true" : @"false";
+        NSError *error;
+        NSData *json = [NSJSONSerialization dataWithJSONObject:toRegister.toDictionary options:0 error:&error];
+        [weakSelf.serviceWorker.context evaluateScript: [NSString stringWithFormat:@"(%@)(JSON.parse('%@'));", success ? scheduleCallback : updateCallback, [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding]]];
+    };
+}
+
+- (void)serviceWorkerUnregisterTag
+{
+    __weak CDVNotification* weakSelf = self;
+    serviceWorker.context[@"CDVNotification_unregisterTag"]= ^(JSValue *tag) {
+        [weakSelf unregisterNotificationTag:[tag toString]];
+    };
+}
+
+- (BOOL)registerNotificationTag:(NSString*)tag
+{
+    if (self.notificationList == nil) {
+        self.notificationList = [NSMutableArray arrayWithObject:tag];
+        return YES;
+    }
+    if ([self.notificationList containsObject:tag]) {
+        NSLog(@"Updating existing notification");
+        return NO;
+    } else {
+        NSLog(@"Adding notification %@", tag);
+        [self.notificationList addObject:tag];
+        return YES;
+    }
+}
+
+- (void)unregisterNotificationTag:(NSString*)tag
+{
+    [self.notificationList removeObject:tag];
+    NSLog(@"Removed %@", tag);
+}
+
 @end
