@@ -1,3 +1,15 @@
+showNotification = function(title, options) {
+    return new Promise(function(resolve, reject) {
+	try {
+	    new Notification(title, options);
+	    resolve();
+	} catch(e) {
+	    console.log(e);
+	    reject();
+	}
+    });
+};
+
 if (typeof cordova === 'undefined') {
     cordova = {};
     cordova.plugins = {};
