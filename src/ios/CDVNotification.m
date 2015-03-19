@@ -291,8 +291,6 @@
     [serviceWorker.context evaluateScript:toDispatch];
 }
 
-#pragma mark - Functions for Notification Tags
-
 - (void)cordovaRegisterNotificationTag:(CDVInvokedUrlCommand*)command
 {
     NSString *tag = [command argumentAtIndex:0];
