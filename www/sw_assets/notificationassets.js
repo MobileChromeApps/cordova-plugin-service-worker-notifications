@@ -10,6 +10,24 @@ showNotification = function(title, options) {
     });
 };
 
+getNotifications = function(filter) {
+    return new Promise(function(resolve, reject) {
+	tag = "";
+	if (typeof filter !== 'undefined') {
+	    tag = filter.tag || tag;
+	    console.log("Tag: " + tag);
+	}
+	var callback = function(notifications) {
+	    if (notifications === "NotFoundError") {
+		reject();
+	    } else {
+		resolve(notifications);
+	    }
+	};
+	CDVNotification_getNotifications(tag, callback);
+    });
+};
+
 if (typeof cordova === 'undefined') {
     cordova = {};
     cordova.plugins = {};
@@ -46,14 +64,6 @@ cordova.plugins.notification.local.cancel = function(ids, callback, scope) {
     ids = Array.isArray(ids) ? ids : [ids];
     ids = CDVNotification_convertIds(ids);
     CDVNotification_cancel(ids, callback);
-};
-
-cordova.plugins.notification.local.on = function(event, callback, scope) {
-    if (!CDVNotification_listener[event]) {
-	CDVNotification_listener[event] = [];
-    }
-    var item = [callback, scope || window];
-    CDVNotification_listener[event].push(item);
 };
 
 CDVNotification_defaults = {
@@ -152,19 +162,3 @@ CDVNotification_convertIds = function(ids) {
     }
     return convertedIds;
 };
-
-CDVNotification_fireEvent = function(event) {
-    var args = Array.apply(null, arguments).splice(1),
-	listener = CDVNotification_listener[event];
-    if (!listener) {
-	return;
-    }
-
-    for (var i = 0; i < listener.length; i++) {
-	var fn = listener[i][0],
-	    scope = listener[i][1];
-	fn.apply(scope, args);
-    }
-};
-
-CDVNotification_listener = {};

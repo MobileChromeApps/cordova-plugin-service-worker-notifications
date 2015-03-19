@@ -18,6 +18,7 @@
 
     <asset src="www/Notification.js" target="sw_assets/Notification.js" />
     <asset src="www/sw_assets/notificationassets.js" target="sw_assets/notificationassets.js" />
+    <asset src="www/sw_assets/notificationevent.js" target="sw_assets/notificationevent.js" />
 
     <platform name="ios">
 	<config-file target="config.xml" parent="/*">
