@@ -37,7 +37,7 @@
     self.localNotificationManager = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
     self.context = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
 
-    // Prepare service worker context functions
+    // Prepare JS context functions
     [self getNotifications];
     [self hasPermission];
     [self schedule];
@@ -48,6 +48,8 @@
     [self cancel];
     [self cancelAll];
     [self serviceWorkerRegisterTag];
+    [self getEventHandler];
+    [self fireClickEvent];
 
     [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -250,24 +252,37 @@
     }
 }
 
-- (void)cordovaCallEventHandler:(CDVInvokedUrlCommand*)command
+- (void)getEventHandler
 {
-    NSString *tag = [command argumentAtIndex:0];
-    NSString *eventType = [command argumentAtIndex:1];
-    NSMutableDictionary *notification = [NSMutableDictionary dictionaryWithDictionary:[self.notificationList objectForKey:tag]];
-    NSArray *arguments = [NSArray arrayWithObject:eventType];
-    JSValue *eventCallback = [notification objectForKey:@"eventCallback"];
-    [eventCallback callWithArguments:arguments];
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    __weak CDVNotification* weakSelf = self;
+    self.context[@"CDVNotification_getEventHandler"]= ^(JSValue *id, JSValue *eventType, JSValue *callback) {
+        [weakSelf returnEventHandlerForId:id eventType:eventType callback:callback];
+    };
+    serviceWorker.context[@"CDVNotification_getEventHandler"]= ^(JSValue *id, JSValue *eventType, JSValue *callback) {
+        [weakSelf returnEventHandlerForId:id eventType:eventType callback:callback];
+    };
+}
 
-    if ([eventType isEqualToString:@"click"]) {
+- (void)returnEventHandlerForId:(JSValue*)id eventType:(JSValue*)eventType callback:(JSValue*)callback
+{
+    if ([notificationList objectForKey:id.toString]) {
+        NSMutableDictionary *notification = [NSMutableDictionary dictionaryWithDictionary:[self.notificationList objectForKey:id.toString]];
+        NSArray *arguments = [NSArray arrayWithObject:eventType.toString];
+        JSValue *eventCallback = [notification objectForKey:@"eventCallback"];
+        [callback callWithArguments:[NSArray arrayWithObject:[eventCallback callWithArguments:arguments]]];
+    }
+}
+
+- (void)fireClickEvent
+{
+    __weak CDVNotification* weakSelf = self;
+    self.context[@"CDVNotification_fireSWClickEvent"]= ^(JSValue *id) {
+        NSMutableDictionary *notification = [NSMutableDictionary dictionaryWithDictionary:[weakSelf.notificationList objectForKey:id.toString]];
         [notification removeObjectForKey:@"eventCallback"];
         NSError *error;
         NSData *json = [NSJSONSerialization dataWithJSONObject:notification options:0 error:&error];
         NSString *dispatchCode = [NSString stringWithFormat:@"FireNotificationClickEvent(JSON.parse('%@'));", [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding]];
-        [serviceWorker.context performSelectorOnMainThread:@selector(evaluateScript:) withObject:dispatchCode waitUntilDone:NO];
-    }
+        [weakSelf.serviceWorker.context performSelectorOnMainThread:@selector(evaluateScript:) withObject:dispatchCode waitUntilDone:NO];
+    };
 }
-
 @end

@@ -81,22 +81,22 @@ function Notification(title, options) {
     var eventCallback = function(eventType) {
 	if (eventType === "click") {
 	    try {
-		that.onclick.call();
+		return that.onclick;
 	    } catch (e) {}
 	}
 	if (eventType === "close") {
 	    try {
-		that.onclose.call();
+		return that.onclose;
 	    } catch (e) {}
 	}
 	if (eventType === "show") {
 	    try {
-		that.onshow.call();
+		return that.onshow;
 	    } catch (e) {}
 	}
 	if (eventType === "error") {
 	    try {
-		that.onerror.call();
+		return that.onerror;
 	    } catch (e) {}
 	}
     };
@@ -104,8 +104,14 @@ function Notification(title, options) {
 	cordova.plugins.notification.local.schedule(that.regData);
     };
     var update = function() {
-	cordova.plugins.notification.local.update(that.regData);
+	cordova.plugins.notification.local.update(that.regData, function() {
+	    that.onclick = click;
+	    that.onclose = close;
+	});
     };
+    var click, close;
+    CDVNotification_getEventHandler(that.id, "click", function(fn) { click = fn; });
+    CDVNotification_getEventHandler(that.id, "close", function(fn) { close = fn; });
     CDVNotification_registerTag(that, schedule, update, eventCallback);
     CDVNotification_updatePermission();
 }
@@ -140,16 +146,25 @@ Notification.prototype.close = function() {
 var CDVNotification_setupListeners = function () {
     CDVNotification_updatePermission();
     cordova.plugins.notification.local.on("cancel", function(registration) {
-	try{
-	    exec(null, null, "Notification", "cordovaCallEventHandler", [registration.id, "close"]);
+	if (typeof exec !== 'undefined') {
+	    var callback = function(fn) {
+		if (fn) {
+		    fn.call();
+		}
+	    };
+	    CDVNotification_getEventHandler(registration.id, "close", callback);
 	    exec(null, null, "Notification", "cordovaUnregisterNotificationTag", [registration.id]);
-	} catch(e) {
 	}
     });
     cordova.plugins.notification.local.on("click", function(registration) {
-	try {
-	    exec(null, null, "Notification", "cordovaCallEventHandler", [registration.id, "click"]);
-	} catch(e) {
+	if (typeof exec !== 'undefined') {
+	    var callback = function(fn) {
+		if (fn) {
+		    fn.call();
+		}
+		CDVNotification_fireSWClickEvent(registration.id);
+	    };
+	    CDVNotification_getEventHandler(registration.id, "click", callback);
 	}
     });
     cordova.plugins.notification.local.on("trigger", function(registration) {
