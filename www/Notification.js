@@ -106,18 +106,7 @@ function Notification(title, options) {
     var update = function() {
 	cordova.plugins.notification.local.update(that.regData);
     };
-    var success = function(option) {
-	if(option) {
-	    schedule();
-	} else {
-	    update();
-	}
-    };
-    try {
-	exec(success, eventCallback, "Notification", "cordovaRegisterNotificationTag", [that]);
-    } catch(e) {
-	CDVNotification_registerTag(that, schedule, update, eventCallback);
-    }
+    CDVNotification_registerTag(that, schedule, update, eventCallback);
     CDVNotification_updatePermission();
 }
 

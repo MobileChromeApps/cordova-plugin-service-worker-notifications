@@ -29,11 +29,13 @@
 @synthesize serviceWorker;
 @synthesize notificationList;
 @synthesize localNotificationManager;
+@synthesize context;
 
 - (void)setup:(CDVInvokedUrlCommand*)command
 {
     self.serviceWorker = [(CDVViewController*)self.viewController getCommandInstance:@"ServiceWorker"];
     self.localNotificationManager = [(CDVViewController*)self.viewController getCommandInstance:@"LocalNotification"];
+    self.context = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
 
     // Prepare service worker context functions
     [self getNotifications];
@@ -191,15 +193,6 @@
     [callback callWithArguments:nil];
 }
 
-- (void)cordovaRegisterNotificationTag:(CDVInvokedUrlCommand*)command
-{
-    NSDictionary *notification = [command argumentAtIndex:0];
-    BOOL sOrU = [self registerNotification:notification withEventCallback:command.callbackId];
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:sOrU];
-    [result setKeepCallback:[NSNumber numberWithBool:YES]];
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-}
-
 - (void)cordovaUnregisterNotificationTag:(CDVInvokedUrlCommand*)command
 {
     NSString *tag = [command argumentAtIndex:0];
@@ -219,6 +212,14 @@
             [updateCallback callWithArguments:nil];
         }
     };
+    self.context[@"CDVNotification_registerTag"]= ^(JSValue *notification, JSValue *scheduleCallback, JSValue *updateCallback, JSValue *eventCallback) {
+        BOOL success = [weakSelf registerNotification:[notification toDictionary] withEventCallback:eventCallback];
+        if (success) {
+            [scheduleCallback callWithArguments:nil];
+        } else {
+            [updateCallback callWithArguments:nil];
+        }
+    };
 }
 
 - (void)unregisterNotification:(NSString*)tag
@@ -229,7 +230,7 @@
     }
 }
 
-- (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(NSObject*)eventCallback
+- (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(JSValue*)eventCallback
 {
     NSString *tag = [NSString stringWithFormat:@"%@", [notification objectForKey:@"id"]];
     NSMutableDictionary *mNotification = [NSMutableDictionary dictionaryWithDictionary:notification];
@@ -255,15 +256,11 @@
     NSString *eventType = [command argumentAtIndex:1];
     NSMutableDictionary *notification = [NSMutableDictionary dictionaryWithDictionary:[self.notificationList objectForKey:tag]];
     NSArray *arguments = [NSArray arrayWithObject:eventType];
-    NSObject *eventCallback = [notification objectForKey:@"eventCallback"];
-    if ([eventCallback isKindOfClass:[JSValue class]]) {
-        [(JSValue*)eventCallback callWithArguments:arguments];
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    } else {
-        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:eventType];
-        [self.commandDelegate sendPluginResult:result callbackId:(NSString*)eventCallback];
-    }
+    JSValue *eventCallback = [notification objectForKey:@"eventCallback"];
+    [eventCallback callWithArguments:arguments];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+
     if ([eventType isEqualToString:@"click"]) {
         [notification removeObjectForKey:@"eventCallback"];
         NSError *error;
