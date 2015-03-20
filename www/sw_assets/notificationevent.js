@@ -12,6 +12,9 @@ NotificationClickEvent.prototype = new ExtendableEvent('notificationclick');
 FireNotificationClickEvent = function(data) {
     var ev = new NotificationClickEvent();
     ev.notification = data;
+    ev.notification.close = function() {
+	cordova.plugins.notification.local.cancel(this.id);
+    };
     dispatchEvent(ev);
     if (ev.promises instanceof Array) {
 

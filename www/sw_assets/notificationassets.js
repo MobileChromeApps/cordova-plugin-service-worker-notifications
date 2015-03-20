@@ -21,6 +21,16 @@ getNotifications = function(filter) {
 	    if (notifications === "NotFoundError") {
 		reject();
 	    } else {
+		notifications.forEach(function(notification) {
+		    notification.onclick = notification.eventCallback("click");
+		    notification.onclose = notification.eventCallback("close");
+		    notification.onshow  = notification.eventCallback("show");
+		    notification.onerror = notification.eventCallback("error");
+		    notification.close = function() {
+			cordova.plugins.notification.local.cancel(this.id);
+		    };
+		    delete notification.eventCallback;
+		});
 		resolve(notifications);
 	    }
 	};
