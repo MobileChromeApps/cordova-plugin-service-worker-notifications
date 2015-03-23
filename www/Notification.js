@@ -133,7 +133,7 @@ Notification.prototype.close = function() {
     cordova.plugins.notification.local.cancel(this.id);
 };
 
-var CDVNotification_setupListeners = function () {
+document.addEventListener('deviceready', function () {
     CDVNotification_updatePermission();
     cordova.plugins.notification.local.on("cancel", function(registration) {
 	if (typeof exec !== 'undefined') {
@@ -160,9 +160,7 @@ var CDVNotification_setupListeners = function () {
     cordova.plugins.notification.local.on("trigger", function(registration) {
 	//TODO: Implement onShow
     });
-};
-
-document.addEventListener('deviceready', CDVNotification_setupListeners);
+});
 
 try {
     navigator.serviceWorker.ready.then(function(swreg) {

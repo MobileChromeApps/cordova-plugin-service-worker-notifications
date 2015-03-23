@@ -51,7 +51,6 @@
     [self getEventHandler];
     [self fireClickEvent];
 
-    [serviceWorker.context evaluateScript:@"CDVNotification_setupListeners();"];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
