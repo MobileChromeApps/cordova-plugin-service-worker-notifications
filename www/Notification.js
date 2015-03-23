@@ -29,7 +29,7 @@ var CDVNotification_decodeTag = function(encodedTag) {
 };
 
 function Notification(title, options) {
-    if (title === undefined) {
+    if (typeof title === 'undefined') {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
     }
     if (typeof options === 'undefined') {
