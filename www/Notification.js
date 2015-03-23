@@ -32,36 +32,26 @@ function Notification(title, options) {
     if (title === undefined) {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
     }
-    this.title = title;
-    this.onclick = null;
-    this.onshow = null;
-    this.onerror = null;
-    this.onclose = null;
-    this.dir = "auto";
-    this.lang = "";
-    this.body = "";
-    this.tag = "";
-    this.icon = "";
-    this.sound = "";
-    this.renotify = false;
-    this.silent = false;
-    this.noscreen = false;
-    this.sticky = false;
-    this.data = {};
-    if (typeof options !== 'undefined') {
-	this.dir = options.dir || this.dir;
-	this.lang = options.lang || this.lang;
-	this.body = options.body || this.body;
-	this.tag = options.tag || this.tag;
-	this.icon = options.icon || this.icon;
-	this.sound = options.sound || this.sound;
-	this.renotify = options.renotify || this.renotify;
-	this.silent = options.silent || this.silent;
-	this.noscreen = options.noscreen || this.noscreen;
-	this.sticky = options.sticky || this.sticky;
-	this.data = options.data || this.data;
+    if (typeof options === 'undefined') {
+	options = {};
     }
-    this.id = this.tag || Date.now();
+    this.title 	  = title;
+    this.onclick  = null;
+    this.onshow   = null;
+    this.onerror  = null;
+    this.onclose  = null;
+    this.dir      = options.dir || "auto";
+    this.lang     = options.lang || "";
+    this.body     = options.body || "";
+    this.tag      = options.tag || "";
+    this.icon     = options.icon || "";
+    this.sound    = options.sound || "";
+    this.renotify = options.renotify || false;
+    this.silent   = options.silent || false;
+    this.noscreen = options.noscreen || false;
+    this.sticky   = options.sticky || false;
+    this.data     = options.data || {};
+    this.id       = this.tag || Date.now();
     if (this.id === this.tag) {
 	this.id = CDVNotification_encodeTag(this.tag);
     }
