@@ -17,11 +17,6 @@
  under the License.
  */
 
-try {
-    var exec = require('cordova/exec');
-} catch (e) {
-
-}
 
 var CDVNotification_updatePermission = function() {
     cordova.plugins.notification.local.hasPermission(function (granted) {
@@ -29,31 +24,23 @@ var CDVNotification_updatePermission = function() {
     });
 };
 
-var CDVNotification_encodeTag = function(tag) {
-    id = "";
+var CDVNotification_hashTag = function(tag) {
+    var hashCode = tag[0] << 7;
     for (var i = 0; i < tag.length; i++) {
-	id = id + tag.charCodeAt(i);
-	id = id + "0";
+	// Javascript truncates this to 32 bits
+	hashCode = ((1000003 * hashCode) ^ tag.charCodeAt(i));
     }
-    return id;
+    return String(hashCode);
 };
 
-var CDVNotification_decodeTag = function(encodedTag) {
-    var arr = encodedTag.split("0");
-    var tag = "";
-    for (var i = 0; i < arr.length-1; i++) {
-	tag = tag + String.fromCharCode(Number(arr[i]));
-    }
-    return tag;
-};
+var CDVNotification_idCounter = Date.now();
 
 function Notification(title, options) {
-    if (typeof title === 'undefined') {
+    if (arguments.length === 0) {
 	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
     }
-    if (typeof options === 'undefined') {
-	options = {};
-    }
+    title = '' + title;
+    options = options || {};
     this.title 	  = title;
     this.onclick  = null;
     this.onshow   = null;
@@ -70,12 +57,12 @@ function Notification(title, options) {
     this.noscreen = options.noscreen || false;
     this.sticky   = options.sticky || false;
     this.data     = options.data || {};
-    this.id       = this.tag || Date.now();
-    if (this.id === this.tag) {
-	this.id = CDVNotification_encodeTag(this.tag);
+    this._id      = this.tag || CDVNotification_idCounter++;
+    if (this._id === this.tag) {
+	this._id = CDVNotification_hashTag(this.tag);
     }
-    this.regData = {
-	    id: this.id,
+    this._regData = {
+	    id: this._id,
 	    title: this.title,
 	    text: this.body,
 	    //every: 0,
@@ -110,23 +97,22 @@ function Notification(title, options) {
 	}
     };
     var schedule = function() {
-	cordova.plugins.notification.local.schedule(that.regData);
+	cordova.plugins.notification.local.schedule(that._regData);
     };
     var update = function() {
-	cordova.plugins.notification.local.update(that.regData, function() {
+	cordova.plugins.notification.local.update(that._regData, function() {
 	    that.onclick = click;
 	    that.onclose = close;
 	});
     };
     var click, close;
-    CDVNotification_getEventHandler(that.id, "click", function(fn) { click = fn; });
-    CDVNotification_getEventHandler(that.id, "close", function(fn) { close = fn; });
+    CDVNotification_getEventHandler(that._id, "click", function(fn) { click = fn; });
+    CDVNotification_getEventHandler(that._id, "close", function(fn) { close = fn; });
     CDVNotification_registerTag(that, schedule, update, eventCallback);
     CDVNotification_updatePermission();
 }
 
 Notification.permission = false;
-
 
 Notification.requestPermission = function() {
     cordova.plugins.notification.local.registerPermission(function(granted) {
@@ -144,37 +130,33 @@ try
 }
 catch(e) 
 {
-    console.log("This webview does not support EventTarget");
+    // iOS webview does not support EventTarget, android does
 }
 
 Notification.prototype.close = function() {
-    that = this;
-    cordova.plugins.notification.local.cancel(this.id);
+    cordova.plugins.notification.local.cancel(this._id);
 };
 
 document.addEventListener('deviceready', function () {
+    exec = require('cordova/exec');
     CDVNotification_updatePermission();
     cordova.plugins.notification.local.on("cancel", function(registration) {
-	if (typeof exec !== 'undefined') {
-	    var callback = function(fn) {
-		if (fn) {
-		    fn.call();
-		}
-	    };
-	    CDVNotification_getEventHandler(registration.id, "close", callback);
-	    exec(null, null, "Notification", "cordovaUnregisterNotificationTag", [registration.id]);
-	}
+	var callback = function(fn) {
+	    if (fn) {
+		fn.call();
+	    }
+	};
+	CDVNotification_getEventHandler(registration._id, "close", callback);
+	exec(null, null, "Notification", "cordovaUnregisterNotificationTag", [registration.id]);
     });
     cordova.plugins.notification.local.on("click", function(registration) {
-	if (typeof exec !== 'undefined') {
-	    var callback = function(fn) {
-		if (fn) {
-		    fn.call();
-		}
-		CDVNotification_fireSWClickEvent(registration.id);
-	    };
-	    CDVNotification_getEventHandler(registration.id, "click", callback);
-	}
+	var callback = function(fn) {
+	    if (fn) {
+		fn.call();
+	    }
+	    CDVNotification_fireSWClickEvent(registration.id);
+	};
+	CDVNotification_getEventHandler(registration.id, "click", callback);
     });
     cordova.plugins.notification.local.on("trigger", function(registration) {
 	//TODO: Implement onShow

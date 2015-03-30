@@ -233,7 +233,7 @@
 
 - (BOOL)registerNotification:(NSDictionary*)notification withEventCallback:(JSValue*)eventCallback
 {
-    NSString *tag = [NSString stringWithFormat:@"%@", [notification objectForKey:@"id"]];
+    NSString *tag = [NSString stringWithFormat:@"%@", [notification objectForKey:@"_id"]];
     NSMutableDictionary *mNotification = [NSMutableDictionary dictionaryWithDictionary:notification];
     [mNotification setObject:eventCallback forKey:@"eventCallback"];
     if (self.notificationList == nil) {
@@ -242,7 +242,7 @@
     }
     if ([self.notificationList objectForKey:tag]) {
         [self.notificationList setObject:mNotification forKey:tag];
-        NSLog(@"Updating existing notification");
+        NSLog(@"Updating existing notification; %@", tag);
         return NO;
     } else {
         NSLog(@"Adding notification %@", tag);
