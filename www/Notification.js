@@ -100,14 +100,9 @@ function Notification(title, options) {
 	cordova.plugins.notification.local.schedule(that._regData);
     };
     var update = function() {
-	cordova.plugins.notification.local.update(that._regData, function() {
-	    that.onclick = click;
-	    that.onclose = close;
-	});
+	cordova.plugins.notification.local.update(that._regData);
     };
     var click, close;
-    CDVNotification_getEventHandler(that._id, "click", function(fn) { click = fn; });
-    CDVNotification_getEventHandler(that._id, "close", function(fn) { close = fn; });
     CDVNotification_registerTag(that, schedule, update, eventCallback);
     CDVNotification_updatePermission();
 }
@@ -121,11 +116,9 @@ Notification.requestPermission = function() {
     });
 };
 
-var ctor = function() {};
 try
 {
-    ctor.prototype = EventTarget.prototype;
-    Notification.prototype = new ctor();
+    Notification.prototype = Object.create(EventTaret.prototype);
     Notification.prototype.constructor = Notification;
 }
 catch(e) 
