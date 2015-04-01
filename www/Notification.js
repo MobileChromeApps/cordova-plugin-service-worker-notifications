@@ -35,6 +35,12 @@ var CDVNotification_hashTag = function(tag) {
 };
 
 var CDVNotification_idCounter = Date.now();
+function CDVNotification_createConstProperty(object, name, value) {
+    Object.defineProperty(object, name, {
+	enumerable: true,
+	get: function() { return value; }
+    });
+}
 
 function Notification(title, options) {
     if (arguments.length === 0) {
@@ -42,20 +48,20 @@ function Notification(title, options) {
     }
     title = '' + title;
     options = options || {};
-    this.title 	  = title;
     this.onclick  = null;
     this.onerror  = null;
-    this.dir      = options.dir || "auto";
-    this.lang     = options.lang || "";
-    this.body     = options.body || "";
-    this.tag      = options.tag || "";
-    this.icon     = options.icon || "";
-    this.sound    = options.sound || "";
-    this.renotify = options.renotify || false;
-    this.silent   = options.silent || false;
-    this.noscreen = options.noscreen || false;
-    this.sticky   = options.sticky || false;
-    this.data     = options.data || {};
+    CDVNotification_createConstProperty(this, 'title', title);
+    CDVNotification_createConstProperty(this, 'dir', options.dir || "auto");
+    CDVNotification_createConstProperty(this, 'lang', options.lang || "");
+    CDVNotification_createConstProperty(this, 'body', options.body || "");
+    CDVNotification_createConstProperty(this, 'tag', options.tag || "");
+    CDVNotification_createConstProperty(this, 'icon', options.icon || "");
+    CDVNotification_createConstProperty(this, 'sound', options.sound || "");
+    CDVNotification_createConstProperty(this, 'renotify', options.renotify || false);
+    CDVNotification_createConstProperty(this, 'silent', options.silent || false);
+    CDVNotification_createConstProperty(this, 'noscreen', options.noscreen || false);
+    CDVNotification_createConstProperty(this, 'sticky', options.sticky || false);
+    CDVNotification_createConstProperty(this, 'data', options.data || {});
     this._id      = this.tag || CDVNotification_idCounter++;
     this._persist = false;
     if (this._id === this.tag) {
