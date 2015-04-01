@@ -5,20 +5,15 @@ Object.defineProperty(this, 'onnotificationclick', {
     set: eventSetter('notificationclick')
 });
 
-NotificationClickEvent = function() {};
+function NotificationClickEvent() {
+    ExtendableEvent.call(this, 'notificationclick');
+}
 
-NotificationClickEvent.prototype = new ExtendableEvent('notificationclick');
+NotificationClickEvent.prototype = Object.create(ExtendableEvent.prototype);
+NotificationClickEvent.constructor = NotificationClickEvent;
 
 FireNotificationClickEvent = function(data) {
     var ev = new NotificationClickEvent();
-    ev.notification = data;
-    ev.notification.close = function() {
-	cordova.plugins.notification.local.cancel(this.id);
-    };
+    ev.notification = CDVNotification_mapNativeToJS(data); 
     dispatchEvent(ev);
-    if (ev.promises instanceof Array) {
-
-    } else {
-
-    }
 };

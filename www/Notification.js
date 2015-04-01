@@ -17,6 +17,7 @@
  under the License.
  */
 
+var exec = require('cordova/exec');
 
 var CDVNotification_updatePermission = function() {
     cordova.plugins.notification.local.hasPermission(function (granted) {
@@ -56,7 +57,7 @@ function Notification(title, options) {
     this.sticky   = options.sticky || false;
     this.data     = options.data || {};
     this._id      = this.tag || CDVNotification_idCounter++;
-    this._persist = typeof exec === 'undefined';
+    this._persist = false;
     if (this._id === this.tag) {
 	this._id = CDVNotification_hashTag(this.tag);
     }
@@ -112,7 +113,6 @@ Notification.prototype.close = function() {
 };
 
 document.addEventListener('deviceready', function () {
-    exec = require('cordova/exec');
     CDVNotification_updatePermission();
     cordova.plugins.notification.local.on("cancel", function(registration) {
 	exec(null, null, "Notification", "cordovaUnregisterNotificationTag", [registration.id]);
@@ -122,12 +122,8 @@ document.addEventListener('deviceready', function () {
     });
 });
 
-try {
-    navigator.serviceWorker.ready.then(function(swreg) {
-	exec(null, null, "Notification", "setup", []);
-    });
-} catch(e) {
-    // This is in the service worker context
-}
+navigator.serviceWorker.ready.then(function(swreg) {
+    exec(null, null, "Notification", "setup", []);
+});
 
 module.exports = Notification;

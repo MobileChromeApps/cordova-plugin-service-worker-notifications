@@ -19,8 +19,15 @@
 
 showNotification = function(title, options) {
     return new Promise(function(resolve, reject) {
+	function schedule() {
+	    cordova.plugins.notification.local.schedule(notification._regData);
+	}
+	function update() {
+	    cordova.plugins.notification.local.schedule(notification._regData);
+	}
 	try {
-	    new Notification(title, options);
+	    var notification = new _Notification(title, options);
+	    CDVNotification_registerTag(notification, schedule, update);
 	    resolve();
 	} catch(e) {
 	    console.log(e);
@@ -35,21 +42,103 @@ getNotifications = function(filter) {
 	filter = filter || {};
 	tag = filter.tag || tag;
 	console.log("Tag: " + tag);
-	var callback = function(notifications) {
-	    notifications.forEach(function(notification) {
-		notification.onclick = notification.eventCallback("click");
-		notification.onclose = notification.eventCallback("close");
-		notification.onshow  = notification.eventCallback("show");
-		notification.onerror = notification.eventCallback("error");
-		notification.close = function() {
-		    cordova.plugins.notification.local.cancel(this.id);
-		};
-		delete notification.eventCallback;
-	    });
-	    resolve(notifications);
-	};
+	function callback(notifications) {
+	    resolve(notifications.map(CDVNotification_mapNativeToJS));
+	}
 	CDVNotification_getNotifications(tag, callback);
     });
+};
+
+function CDVNotification_mapNativeToJS(notification){
+    return  new _Notification(notification.title,
+	{
+	    dir: notification.dir,
+	    lang: notification.lang,
+	    body: notification.body,
+	    tag: notification.tag,
+	    icon: notification.icon,
+	    sound: notification.sound,
+	    renotify: notification.renotify,
+	    silent: notification.silent,
+	    noscreen: notification.noscreen,
+	    sticky: notification.sticky,
+	    data: notification.data
+	});
+}
+
+var CDVNotification_idCounter = Date.now() * 2;
+function CDVNotification_hashTag(tag) {
+    var hashCode = tag[0] << 7;
+    for (var i = 0; i < tag.length; i++) {
+	// Javascript truncates this to 32 bits
+	hashCode = ((1000003 * hashCode) ^ tag.charCodeAt(i));
+    }
+    return String(hashCode);
+}
+function CDVNotification_updatePermission() {
+    cordova.plugins.notification.local.hasPermission(function (granted) {
+	Notification.permission = granted;
+    });
+}
+
+function Notification() {
+    if (this.constructor === Notification) {
+	throw new TypeError("Can't instantiate Notification in this context, instead use showNotification(title, options)");
+    }
+}
+
+Notification.permission = false;
+Notification.requestPermission = function () {
+    cordova.plugins.notification.local.registerPermission(function(granted) {
+	console.log("Have notification permission: " + granted);
+	Notification.permission = granted;
+    });
+};
+
+function _Notification(title, options) {
+    if (arguments.length === 0) {
+	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
+    }
+    title = '' + title;
+    options = options || {};
+    this.title 	  = title;
+    this.onclick  = null;
+    this.onerror  = null;
+    this.dir      = options.dir || "auto";
+    this.lang     = options.lang || "";
+    this.body     = options.body || "";
+    this.tag      = options.tag || "";
+    this.icon     = options.icon || "";
+    this.sound    = options.sound || "";
+    this.renotify = options.renotify || false;
+    this.silent   = options.silent || false;
+    this.noscreen = options.noscreen || false;
+    this.sticky   = options.sticky || false;
+    this.data     = options.data || {};
+    this._id      = this.tag || CDVNotification_idCounter++;
+    this._persist = true;
+    if (this._id === this.tag) {
+	this._id = CDVNotification_hashTag(this.tag);
+    }
+    this._regData = {
+	    id: this._id,
+	    title: this.title,
+	    text: this.body,
+	    //every: 0,
+	    //at: Date.now(),
+	    //badge: 0,
+	    sound: this.sound,
+	    data: this.data,
+	    icon: (this.addEventListener !== undefined ? this.icon : ""),
+	    ongoing: this.sticky
+    };
+    CDVNotification_updatePermission();
+}
+
+_Notification.prototype = Object.create(Notification.prototype);
+_Notification.constructor = _Notification;
+_Notification.prototype.close = function() {
+    cordova.plugins.notification.local.cancel(this._id);
 };
 
 if (typeof cordova === 'undefined') {
