@@ -32,26 +32,21 @@ showNotification = function(title, options) {
 getNotifications = function(filter) {
     return new Promise(function(resolve, reject) {
 	tag = "";
-	if (typeof filter !== 'undefined') {
-	    tag = filter.tag || tag;
-	    console.log("Tag: " + tag);
-	}
+	filter = filter || {};
+	tag = filter.tag || tag;
+	console.log("Tag: " + tag);
 	var callback = function(notifications) {
-	    if (notifications === "NotFoundError") {
-		reject();
-	    } else {
-		notifications.forEach(function(notification) {
-		    notification.onclick = notification.eventCallback("click");
-		    notification.onclose = notification.eventCallback("close");
-		    notification.onshow  = notification.eventCallback("show");
-		    notification.onerror = notification.eventCallback("error");
-		    notification.close = function() {
-			cordova.plugins.notification.local.cancel(this.id);
-		    };
-		    delete notification.eventCallback;
-		});
-		resolve(notifications);
-	    }
+	    notifications.forEach(function(notification) {
+		notification.onclick = notification.eventCallback("click");
+		notification.onclose = notification.eventCallback("close");
+		notification.onshow  = notification.eventCallback("show");
+		notification.onerror = notification.eventCallback("error");
+		notification.close = function() {
+		    cordova.plugins.notification.local.cancel(this.id);
+		};
+		delete notification.eventCallback;
+	    });
+	    resolve(notifications);
 	};
 	CDVNotification_getNotifications(tag, callback);
     });
