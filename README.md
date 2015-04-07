@@ -10,6 +10,7 @@ This is a wrapper around [cordova-plugin-local-notifications](https://github.com
 - iOS
 
 ##Sample Usage
+####Page Context
 Creating a new notification is as simple as 
 ```javascript
 var myNotification = new Notification("Hello World");
@@ -30,4 +31,14 @@ Closing a notification is also very simple.
 ```javascript
 myNotification.close();
 ```
-On iOS, it is possible to create and close notifications from both the page and the service worker contexts.
+####Service Worker Context
+To create a notification from within your service worker script, use 
+```javascript
+showNotification(myTitle, options);
+```
+Every notification you create in the service worker context persists until it is clicked or closed. These notifications will remain active even if your app is closed. You can get a list of existing notifications by using
+```javascript
+getNotifications(filter).then(function(notifications) {
+    //Do something with your notifications
+    ...
+});
