@@ -60,7 +60,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 
 - (void)restoreList
 {
-    NOTIFICATION_LIST_STORAGE_KEY = [NSString stringWithFormat:@"CDVNotification_notificationList_%@", [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"]];
+    NOTIFICATION_LIST_STORAGE_KEY = @"CDVNotification_notificationList";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     notificationList = [[defaults objectForKey:NOTIFICATION_LIST_STORAGE_KEY] mutableCopy];
     if (notificationList == nil)
@@ -75,14 +75,12 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     // Remove all non persistent notifications
     for (NSString *key in [notificationList allKeys]) {
-        NSMutableDictionary *notification = [notificationList objectForKey: key];
-        NSNumber *persist = [notification objectForKey:@"_persist"];
+        NSMutableDictionary *notification = notificationList[key];
+        NSNumber *persist = notification[@"_persist"];
         if (!persist.boolValue) {
             [notificationList removeObjectForKey:key];
             // Remove nonpersistent notifications from tray
-            CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-            [command setValue:@[[[notification objectForKey:@"_id"] stringValue]] forKey:@"arguments"];
-            [command setValue:@"null" forKey:@"callbackId"];
+            CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:@[[notification[@"_id"] stringValue]] callbackId:@"null" className:nil methodName:nil];
             [self.localNotificationManager cancel:command];
         }
         [notification removeObjectsForKeys:@[@"onclick", @"onerror"]];
@@ -95,12 +93,12 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_getNotifications"]= ^(JSValue* tag, JSValue *callback) {
-        if ([tag.toString isEqualToString:@""]) {
-            [callback callWithArguments:[NSArray arrayWithObject:[weakSelf.notificationList allValues]]];
+        if ([[tag toString] isEqualToString:@""]) {
+            [callback callWithArguments:@[[weakSelf.notificationList allValues]]];
         } else {
             NSDictionary *dict;
             for (dict in [weakSelf.notificationList allValues]) {
-                if ([[dict objectForKey:@"tag"] isEqualToString:tag.toString]) {
+                if ([dict[@"tag"] isEqualToString:[tag toString]]) {
                     [callback callWithArguments:@[@[dict]]];
                     return;
                 }
@@ -122,9 +120,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_schedule"]= ^(JSValue *options, JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:options.toArray forKey:@"arguments"];
-        [command setValue:@"null" forKey:@"callbackId"];
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:[options toArray] callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager schedule:command];
         [weakSelf executeCallback:callback];
     };
@@ -134,9 +130,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_update"]= ^(JSValue *options, JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:options.toArray forKey:@"arguments"];
-        [command setValue:@"null" forKey:@"callbackId"];
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:[options toArray] callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager update:command];
         [weakSelf executeCallback:callback];
     };
@@ -146,9 +140,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_clear"]= ^(JSValue *ids, JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:ids.toArray forKey:@"arguments"];
-        [command setValue:@"null" forKey:@"callbackId"];
+CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:[ids toArray] callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager clear:command];
         [weakSelf executeCallback:callback];
     };
@@ -158,8 +150,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"clearAll"]= ^(JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:@"null" forKey:@"callbackId"];
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:nil callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager clearAll:command];
         [weakSelf executeCallback:callback];
     };
@@ -169,9 +160,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"CDVNotification_cancel"]= ^(JSValue *ids, JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:ids.toArray forKey:@"arguments"];
-        [command setValue:@"null" forKey:@"callbackId"];
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:[ids toArray] callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager cancel:command];
         [weakSelf executeCallback:callback];
     };
@@ -181,8 +170,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification *weakSelf = self;
     serviceWorker.context[@"cordova"][@"plugins"][@"notification"][@"local"][@"cancelAll"]= ^(JSValue *callback) {
-        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] init];
-        [command setValue:@"null" forKey:@"callbackId"];
+        CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:nil callbackId:@"null" className:nil methodName:nil];
         [weakSelf.localNotificationManager cancelAll:command];
         [weakSelf executeCallback:callback];
     };
@@ -206,7 +194,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 
 - (void)checkPermission:(JSValue*)callback
 {
-    BOOL hathPermission = NO;
+    BOOL hasPermission = NO;
     if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)])
     {
         UIUserNotificationType types;
@@ -214,17 +202,17 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
         settings = [[UIApplication sharedApplication] currentUserNotificationSettings];
         types = UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound;
         if (settings.types & types) {
-            hathPermission = YES;
+            hasPermission = YES;
         }
     } else {
-        hathPermission = YES;
+        hasPermission = YES;
     }
-    [callback callWithArguments:[NSArray arrayWithObject:[NSNumber numberWithBool:hathPermission]]];
+    [callback callWithArguments:@[[NSNumber numberWithBool:hasPermission]]];
 }
 
 - (void)executeCallback:(JSValue *)callback
 {
-    if ([callback.toString isEqualToString:@"undefined"]) {
+    if ([[callback toString] isEqualToString:@"undefined"]) {
         return;
     }
     [callback callWithArguments:nil];
@@ -261,7 +249,7 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 
 - (void)unregisterNotification:(NSString*)id
 {
-    if ([self.notificationList objectForKey:id]) {
+    if (self.notificationList[id]) {
         [self.notificationList removeObjectForKey:id];
         NSLog(@"Removed %@", id);
     }
@@ -269,22 +257,22 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 
 - (BOOL)registerNotification:(NSDictionary*)notification withCallback:callback
 {
-    NSString *tag = [NSString stringWithFormat:@"%@", [notification objectForKey:@"_id"]];
+    NSString *tag = [NSString stringWithFormat:@"%@", notification[@"_id"]];
     NSMutableDictionary *mNotification = [NSMutableDictionary dictionaryWithDictionary:notification];
     if (callback != nil) {
-        [mNotification setObject:callback forKey:@"clickCallback"];
+        mNotification[@"clickCallback"] = callback;
     }
     if (self.notificationList == nil) {
         self.notificationList = [NSMutableDictionary dictionaryWithObject:mNotification forKey: tag];
         return YES;
     }
-    if ([self.notificationList objectForKey:tag]) {
-        [self.notificationList setObject:mNotification forKey:tag];
+    if (self.notificationList[tag]) {
+        self.notificationList[tag] = mNotification;
         NSLog(@"Updating existing notification; %@", tag);
         return NO;
     } else {
         NSLog(@"Adding notification %@", tag);
-        [self.notificationList setObject:mNotification forKey:tag];
+        self.notificationList[tag] = mNotification;
         return YES;
     }
 }
@@ -293,15 +281,15 @@ NSString * NOTIFICATION_LIST_STORAGE_KEY;
 {
     __weak CDVNotification* weakSelf = self;
     self.context[@"CDVNotification_handleClickEvent"]= ^(JSValue *id, JSValue *callback) {
-        NSDictionary *notification = [NSDictionary dictionaryWithDictionary:[weakSelf.notificationList objectForKey:id.toString]];
-        NSNumber *persist = [notification objectForKey:@"_persist"];
+        NSDictionary *notification = weakSelf.notificationList[[id toString]];
+        NSNumber *persist = notification[@"_persist"];
         if (persist.boolValue) {
             NSError *error;
             NSData *json = [NSJSONSerialization dataWithJSONObject:notification options:0 error:&error];
             NSString *dispatchCode = [NSString stringWithFormat:@"FireNotificationClickEvent(JSON.parse('%@'));", [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding]];
             [weakSelf.serviceWorker.context performSelectorOnMainThread:@selector(evaluateScript:) withObject:dispatchCode waitUntilDone:NO];
         } else {
-            JSValue *clickCallback = [notification objectForKey:@"clickCallback"];
+            JSValue *clickCallback = notification[@"clickCallback"];
             [[clickCallback callWithArguments:nil] callWithArguments:nil];
         }
     };
