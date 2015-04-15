@@ -207,7 +207,7 @@ CDVInvokedUrlCommand *command = [[CDVInvokedUrlCommand alloc] initWithArguments:
     } else {
         hasPermission = YES;
     }
-    [callback callWithArguments:@[[NSNumber numberWithBool:hasPermission]]];
+    [callback callWithArguments:@[@(hasPermission)]];
 }
 
 - (void)executeCallback:(JSValue *)callback
