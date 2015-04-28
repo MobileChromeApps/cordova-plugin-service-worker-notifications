@@ -8,7 +8,7 @@
     <keywords>cordova,notification</keywords>
 
     <dependency id="de.appplant.cordova.plugin.local-notification" url="https://github.com/katzer/cordova-plugin-local-notifications.git" />
-    <dependency id="org.apache.cordova.serviceworker" url="https://github.com/MobileChromeApps/cordova-plugin-serviceworker.git" />
+    <dependency id="cordova-plugin-service-worker" url="https://github.com/MobileChromeApps/cordova-plugin-service-worker.git" />
 
     <js-module src="www/Notification.js" name="Notification">
 	<clobbers target="Notification" />
