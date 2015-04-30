@@ -18,13 +18,24 @@
  */
 
 #import <Cordova/CDV.h>
-#import "CDVNotification.h"
+#import <Cordova/CDVPlugin.h>
 #import "APPLocalNotification.h"
-#import <JavaScriptCore/JavaScriptCore.h>
 #import "UILocalNotification+APPLocalNotification.h"
 #import "UIApplication+APPLocalNotification.h"
+#import "CDVServiceWorker.h"
+#import <JavaScriptCore/JSContext.h>
+#import <JavaScriptCore/JavaScriptCore.h>
 
 NSString * NOTIFICATION_LIST_STORAGE_KEY;
+
+@interface CDVNotification : CDVPlugin {}
+
+@property (nonatomic, strong) CDVServiceWorker *serviceWorker;
+@property (nonatomic, strong) NSMutableDictionary *notificationList;
+@property (nonatomic, strong) APPLocalNotification *localNotificationManager;
+@property (nonatomic, retain) JSContext *context;
+
+@end
 
 @implementation CDVNotification
 

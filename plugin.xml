@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-	   id="org.apache.cordova.notification"
+	   id="cordova-plugin-notification"
       version="0.0.1-dev">
     <name>Notification</name>
     <description>Notification Plugin</description>
     <license>Apache 2.0</license>
     <keywords>cordova,notification</keywords>
 
-    <dependency id="de.appplant.cordova.plugin.local-notification" url="https://github.com/katzer/cordova-plugin-local-notifications.git" />
+    <dependency id="de.appplant.cordova.plugin.local-notification" />
     <dependency id="cordova-plugin-service-worker" url="https://github.com/MobileChromeApps/cordova-plugin-service-worker.git" />
 
     <js-module src="www/Notification.js" name="Notification">
 	<clobbers target="Notification" />
-    </js-module>
-    <js-module src="www/Assets.js" name="Assets">
-	<clobbers target="" />
     </js-module>
 
     <asset src="www/sw_assets/notificationassets.js" target="sw_assets/notificationassets.js" />
@@ -26,7 +23,6 @@
 		<param name="ios-package" value="CDVNotification" />
 	    </feature>
 	</config-file>
-	<header-file src="src/ios/CDVNotification.h" />
 	<source-file src="src/ios/CDVNotification.m" />
     </platform>
 </plugin>
