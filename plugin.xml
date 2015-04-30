@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-	   id="cordova-plugin-notification"
-      version="0.0.1-dev">
-    <name>Notification</name>
-    <description>Notification Plugin</description>
+	   id="cordova-plugin-service-worker-notifications"
+      version="1.0.0">
+    <name>Notifications</name>
+    <description>Service Worker Notification Plugin</description>
     <license>Apache 2.0</license>
-    <keywords>cordova,notification</keywords>
+    <keywords>cordova,notification,service,worker</keywords>
 
     <dependency id="de.appplant.cordova.plugin.local-notification" />
-    <dependency id="cordova-plugin-service-worker" url="https://github.com/MobileChromeApps/cordova-plugin-service-worker.git" />
+    <dependency id="cordova-plugin-service-worker" />
 
     <js-module src="www/Notification.js" name="Notification">
 	<clobbers target="Notification" />

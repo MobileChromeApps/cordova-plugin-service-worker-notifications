@@ -1,16 +1,16 @@
-#Cordova Local Notification Plugin Wrapper (with Service Worker Support)
+# Cordova Local Notification Plugin Wrapper (with Service Worker Support)
 This is a wrapper around [cordova-plugin-local-notifications](https://github.com/katzer/cordova-plugin-local-notifications) that conforms to the standard web notification API. This plugin also enables the use of local notifications from within a service worker script.
 
-##Plugin Status
-#####Basic Notification API
+## Plugin Status
+##### Basic Notification API
 - iOS
 - Android
 
-#####Service Worker Functionality
+##### Service Worker Functionality
 - iOS
 
-##Sample Usage
-####Page Context
+## Sample Usage
+#### Page Context
 Creating a new notification is as simple as 
 ```javascript
 var myNotification = new Notification("Hello World");
@@ -31,7 +31,7 @@ Closing a notification is also very simple.
 ```javascript
 myNotification.close();
 ```
-####Service Worker Context
+#### Service Worker Context
 To create a notification from within your service worker script, use 
 ```javascript
 showNotification(myTitle, options);
@@ -44,6 +44,9 @@ getNotifications(filter).then(function(notifications) {
 });
 ```
 
-##Caveats
+## Caveats
  - Service worker capabilities are not currently available on Android
  - The following notification options are not yet implemented: `dir`, `lang`, `renotify`, `silent`, and `noscreen`
+
+ ## 1.0.0 (April 30, 2015)
+ * Initial release

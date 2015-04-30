@@ -1,0 +1,29 @@
+{
+  "name": "cordova-plugin-service-worker-notifications",
+  "version": "1.0.0",
+  "description": "Service Worker Notification Plugin",
+  "cordova": {
+    "id": "cordova-plugin-service-worker-notifications",
+    "platforms": [
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MobileChromeApps/cordova-plugin-service-worker-notifications.git"
+  },
+  "keywords": [
+    "cordova",
+    "notification",
+    "service",
+    "worker",
+    "ecosystem:cordova",
+    "cordova-ios"
+  ],
+  "author": "The Chrome Team",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/MobileChromeApps/cordova-plugin-service-worker-notifications/issues"
+  },
+  "homepage": "https://github.com/MobileChromeApps/cordova-plugin-service-worker-notifications#readme"
+}
