@@ -42,3 +42,8 @@ getNotifications(filter).then(function(notifications) {
     //Do something with your notifications
     ...
 });
+```
+
+##Caveats
+ - Service worker capabilities are not currently available on Android
+ - The following notification options are not yet implemented: `dir`, `lang`, `renotify`, `silent`, and `noscreen`
