@@ -44,25 +44,25 @@ function CDVNotification_createConstProperty(object, name, value) {
 
 function Notification(title, options) {
     if (arguments.length === 0) {
-	throw new TypeError("Failed to construct 'Notification': 1 argument required, but only 0 present");
+	throw new TypeError('Failed to construct \'Notification\': 1 argument required, but only 0 present');
     }
     title = '' + title;
     options = options || {};
     this.onclick  = null;
     this.onerror  = null;
     CDVNotification_createConstProperty(this, 'title', title);
-    CDVNotification_createConstProperty(this, 'dir', options.dir || "auto");
-    CDVNotification_createConstProperty(this, 'lang', options.lang || "");
-    CDVNotification_createConstProperty(this, 'body', options.body || "");
-    CDVNotification_createConstProperty(this, 'tag', options.tag || "");
-    CDVNotification_createConstProperty(this, 'icon', options.icon || "");
-    CDVNotification_createConstProperty(this, 'sound', options.sound || "");
+    CDVNotification_createConstProperty(this, 'dir', options.dir || 'auto');
+    CDVNotification_createConstProperty(this, 'lang', options.lang || '');
+    CDVNotification_createConstProperty(this, 'body', options.body || '');
+    CDVNotification_createConstProperty(this, 'tag', options.tag || '');
+    CDVNotification_createConstProperty(this, 'icon', options.icon || '');
+    CDVNotification_createConstProperty(this, 'sound', options.sound || '');
     CDVNotification_createConstProperty(this, 'renotify', options.renotify || false);
     CDVNotification_createConstProperty(this, 'silent', options.silent || false);
     CDVNotification_createConstProperty(this, 'noscreen', options.noscreen || false);
     CDVNotification_createConstProperty(this, 'sticky', options.sticky || false);
     CDVNotification_createConstProperty(this, 'data', options.data || {});
-    this._id      = this.tag || CDVNotification_idCounter++;
+    this._id = this.tag || CDVNotification_idCounter++;
     this._persist = false;
     if (this._id === this.tag) {
 	this._id = CDVNotification_hashTag(this.tag);
@@ -76,7 +76,7 @@ function Notification(title, options) {
 	    //badge: 0,
 	    sound: this.sound,
 	    data: this.data,
-	    icon: (this.addEventListener !== undefined ? this.icon : ""),
+	    icon: (this.addEventListener !== undefined ? this.icon : ''), //Checks whether or not this is on android
 	    ongoing: this.sticky
     };
     var that = this;
@@ -99,7 +99,7 @@ Notification.permission = false;
 
 Notification.requestPermission = function() {
     cordova.plugins.notification.local.registerPermission(function(granted) {
-	console.log("permission has been granted: " + granted);
+	console.log('permission has been granted: ' + granted);
 	Notification.permission = granted;
     });
 };
@@ -120,16 +120,16 @@ Notification.prototype.close = function() {
 
 document.addEventListener('deviceready', function () {
     CDVNotification_updatePermission();
-    cordova.plugins.notification.local.on("cancel", function(registration) {
-	exec(null, null, "Notification", "cordovaUnregisterNotificationTag", [registration.id]);
+    cordova.plugins.notification.local.on('cancel', function(registration) {
+	exec(null, null, 'Notification', 'cordovaUnregisterNotificationTag', [registration.id]);
     });
-    cordova.plugins.notification.local.on("click", function(registration) {
+    cordova.plugins.notification.local.on('click', function(registration) {
 	CDVNotification_handleClickEvent(registration.id);
     });
 });
 
 navigator.serviceWorker.ready.then(function(swreg) {
-    exec(null, null, "Notification", "setup", []);
+    exec(null, null, 'Notification', 'setup', []);
 });
 
 module.exports = Notification;
